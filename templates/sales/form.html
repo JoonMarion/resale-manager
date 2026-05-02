@@ -1,0 +1,276 @@
+{% load widget_tweaks %}
+
+<div class="overflow-y-auto max-h-[85vh]">
+<div class="p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold text-gray-900">Nova venda</h2>
+        <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
+
+    <form hx-post="{% url 'sales:create' %}" hx-target="#modal-content" class="space-y-5">
+        {% csrf_token %}
+
+        <!-- Cliente -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Cliente *</label>
+            {% render_field form.customer class="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 outline-none transition-all" data-searchable="true" data-placeholder="Buscar cliente..." %}
+            {% if form.customer.errors %}<p class="text-red-500 text-xs mt-1">{{ form.customer.errors.0 }}</p>{% endif %}
+        </div>
+
+        <!-- Forma de pagamento -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Forma de Pagamento</label>
+            {% render_field form.payment_method class="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 outline-none transition-all" %}
+        </div>
+
+        <!-- Já pago -->
+        <div class="flex items-center space-x-3">
+            {% render_field form.is_paid class="w-5 h-5 text-green-600 rounded accent-green-600" %}
+            <label class="text-sm font-medium text-gray-700">Já pago?</label>
+        </div>
+
+        <!-- Itens da venda -->
+        <div>
+            <div class="flex justify-between items-center mb-3">
+                <label class="block text-sm font-medium text-gray-700">Itens da Venda *</label>
+                <button type="button" id="add-item-btn"
+                    class="text-sm text-green-600 font-semibold hover:text-green-700 transition-colors">
+                    + Adicionar item
+                </button>
+            </div>
+
+            {{ formset.management_form }}
+
+            <div id="item-forms" class="space-y-3">
+                {% for item_form in formset %}
+                <div class="item-row bg-gray-50 p-3 rounded-2xl space-y-2">
+                    {{ item_form.id }}
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Produto</label>
+                        {% render_field item_form.product class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm" data-searchable="true" data-placeholder="Buscar produto..." %}
+                        {% if item_form.product.errors %}<p class="text-red-500 text-xs mt-1">{{ item_form.product.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Quantidade</label>
+                            {% render_field item_form.quantity class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="Qtd" %}
+                            {% if item_form.quantity.errors %}<p class="text-red-500 text-xs mt-1">{{ item_form.quantity.errors.0 }}</p>{% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Valor Unitário</label>
+                            {% render_field item_form.unit_sale_price class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="R$ 0,00" data-price-field="true" %}
+                            {% if item_form.unit_sale_price.errors %}<p class="text-red-500 text-xs mt-1">{{ item_form.unit_sale_price.errors.0 }}</p>{% endif %}
+                            <p class="text-xs text-gray-400 mt-1">Você pode editar este valor caso a venda tenha sido feita por outro preço.</p>
+                        </div>
+                    </div>
+                    <p class="item-total hidden text-xs font-semibold text-green-700">Total do item: R$ <span class="item-total-value">0,00</span></p>
+                    <button type="button" class="remove-item text-red-500 text-xs font-medium hover:text-red-700 transition-colors">
+                        Remover item
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if formset.non_form_errors %}
+            <p class="text-red-500 text-sm mt-2">{{ formset.non_form_errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Total da venda -->
+        <div class="bg-green-50 border border-green-100 rounded-2xl px-5 py-4 flex justify-between items-center">
+            <span class="text-sm font-semibold text-green-800">Total da Venda</span>
+            <span class="text-xl font-bold text-green-700">R$ <span id="sale-grand-total">0,00</span></span>
+        </div>
+
+        <button type="submit"
+            class="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg shadow-green-100 transition-all active:scale-[0.98]">
+            Salvar Venda
+        </button>
+    </form>
+</div>
+</div>
+
+<!-- Template vazio para clonar novos itens -->
+<script type="text/template" id="item-empty-form">
+<div class="item-row bg-gray-50 p-3 rounded-2xl space-y-2">
+    {{ formset.empty_form.id }}
+    <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Produto</label>
+        {% render_field formset.empty_form.product class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm" data-searchable="true" data-placeholder="Buscar produto..." %}
+    </div>
+    <div class="grid grid-cols-2 gap-2">
+        <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Quantidade</label>
+            {% render_field formset.empty_form.quantity class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="Qtd" %}
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Valor Unitário</label>
+            {% render_field formset.empty_form.unit_sale_price class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="R$ 0,00" data-price-field="true" %}
+            <p class="text-xs text-gray-400 mt-1">Você pode editar este valor caso a venda tenha sido feita por outro preço.</p>
+        </div>
+    </div>
+    <p class="item-total hidden text-xs font-semibold text-green-700">Total do item: R$ <span class="item-total-value">0,00</span></p>
+    <button type="button" class="remove-item text-red-500 text-xs font-medium hover:text-red-700 transition-colors">
+        Remover item
+    </button>
+</div>
+</script>
+
+<script>
+const PRODUCT_PRICES = {{ product_prices_json|safe }};
+
+function makeSearchable(selectEl) {
+    if (selectEl.dataset.searchableInit) return;
+    selectEl.dataset.searchableInit = '1';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'relative';
+    selectEl.parentNode.insertBefore(wrapper, selectEl);
+    wrapper.appendChild(selectEl);
+    selectEl.style.display = 'none';
+
+    const display = document.createElement('input');
+    display.type = 'text';
+    display.placeholder = selectEl.dataset.placeholder || 'Selecione...';
+    display.className = selectEl.className;
+    display.autocomplete = 'off';
+    wrapper.insertBefore(display, selectEl);
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'absolute z-[60] w-full bg-white border border-gray-200 rounded-2xl shadow-lg mt-1 max-h-48 overflow-y-auto hidden';
+    wrapper.appendChild(dropdown);
+
+    function renderOptions(filter) {
+        dropdown.innerHTML = '';
+        let hasResults = false;
+        Array.from(selectEl.options).forEach(function (opt) {
+            if (!opt.value) return;
+            if (filter && !opt.text.toLowerCase().includes(filter.toLowerCase())) return;
+            hasResults = true;
+            const item = document.createElement('div');
+            item.className = 'px-4 py-2 text-sm cursor-pointer hover:bg-green-50 hover:text-green-700';
+            if (opt.value === selectEl.value) {
+                item.classList.add('bg-green-50', 'text-green-700', 'font-medium');
+            }
+            item.textContent = opt.text;
+            item.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                selectEl.value = opt.value;
+                display.value = opt.text;
+                dropdown.classList.add('hidden');
+                selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+            dropdown.appendChild(item);
+        });
+        if (!hasResults) {
+            const empty = document.createElement('div');
+            empty.className = 'px-4 py-2 text-sm text-gray-400';
+            empty.textContent = 'Nenhum resultado encontrado';
+            dropdown.appendChild(empty);
+        }
+    }
+
+    display.addEventListener('focus', function () {
+        renderOptions(display.value);
+        dropdown.classList.remove('hidden');
+    });
+    display.addEventListener('input', function () {
+        selectEl.value = '';
+        renderOptions(display.value);
+        dropdown.classList.remove('hidden');
+    });
+    display.addEventListener('blur', function () {
+        setTimeout(function () { dropdown.classList.add('hidden'); }, 200);
+    });
+
+    if (selectEl.value) {
+        const selected = Array.from(selectEl.options).find(function (o) { return o.value === selectEl.value; });
+        if (selected) display.value = selected.text;
+    }
+}
+
+(function () {
+    document.querySelectorAll('select[data-searchable]').forEach(makeSearchable);
+
+    function updateSaleTotal() {
+        var grand = 0;
+        document.querySelectorAll('#item-forms .item-total-value').forEach(function(el) {
+            var val = parseFloat(el.textContent.replace(/\./g, '').replace(',', '.')) || 0;
+            grand += val;
+        });
+        var el = document.getElementById('sale-grand-total');
+        if (el) el.textContent = grand.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function updateItemTotal(row) {
+        var qtyInput = row.querySelector('input[name*="quantity"]');
+        var priceInput = row.querySelector('[data-price-field]');
+        var totalEl = row.querySelector('.item-total');
+        var totalValue = row.querySelector('.item-total-value');
+        if (!qtyInput || !priceInput || !totalEl || !totalValue) return;
+        var qty = parseFloat(qtyInput.value) || 0;
+        var price = parseFloat(priceInput.value) || 0;
+        if (qty > 0 && price > 0) {
+            var total = qty * price;
+            totalValue.textContent = total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            totalEl.classList.remove('hidden');
+        } else {
+            totalEl.classList.add('hidden');
+        }
+        updateSaleTotal();
+    }
+
+    document.getElementById('item-forms').addEventListener('change', function (e) {
+        const sel = e.target.closest ? e.target : null;
+        if (!sel || !sel.matches('select[data-placeholder="Buscar produto..."]')) return;
+        const row = sel.closest('.item-row');
+        if (!row) return;
+        const priceInput = row.querySelector('[data-price-field]');
+        const price = PRODUCT_PRICES[sel.value];
+        if (price !== undefined && priceInput) {
+            priceInput.value = price;
+            updateItemTotal(row);
+        }
+    });
+
+    document.getElementById('item-forms').addEventListener('input', function (e) {
+        const target = e.target;
+        if (!target.matches('input[name*="quantity"], [data-price-field]')) return;
+        const row = target.closest('.item-row');
+        if (row) updateItemTotal(row);
+    });
+
+    const totalFormsInput = document.getElementById('id_items-TOTAL_FORMS');
+    const container = document.getElementById('item-forms');
+
+    document.getElementById('add-item-btn').addEventListener('click', function () {
+        const count = parseInt(totalFormsInput.value);
+        const template = document.getElementById('item-empty-form').innerHTML;
+        const newHtml = template.replace(/__prefix__/g, count);
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = newHtml.trim();
+        const newRow = wrapper.firstElementChild;
+        container.appendChild(newRow);
+        const newSelect = newRow.querySelector('select[data-searchable]');
+        if (newSelect) makeSearchable(newSelect);
+        totalFormsInput.value = count + 1;
+    });
+
+    container.addEventListener('click', function (e) {
+        if (!e.target.classList.contains('remove-item')) return;
+        const rows = container.querySelectorAll('.item-row');
+        if (rows.length <= 1) { showToast('A venda deve conter ao menos um item.', 'warning'); return; }
+        e.target.closest('.item-row').remove();
+        updateSaleTotal();
+        container.querySelectorAll('.item-row').forEach(function (row, idx) {
+            row.querySelectorAll('[name], [id]').forEach(function (el) {
+                if (el.name) el.name = el.name.replace(/items-\d+-/, 'items-' + idx + '-');
+                if (el.id) el.id = el.id.replace(/items-\d+-/, 'items-' + idx + '-');
+            });
+        });
+        totalFormsInput.value = parseInt(totalFormsInput.value) - 1;
+    });
+})();
+</script>

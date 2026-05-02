@@ -1,0 +1,11 @@
+# Criar dados padrão (30 clientes, 25 produtos, 50 vendas)
+python manage.py seed_demo
+
+# Personalizar quantidades
+python manage.py seed_demo --customers 50 --products 25 --sales 100
+
+# Limpar tudo e recriar do zero
+python manage.py seed_demo --clear
+
+# Limpar e recriar com mais dados
+python manage.py seed_demo --clear --customers 60 --sales 120

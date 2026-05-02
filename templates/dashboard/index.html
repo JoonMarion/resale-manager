@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Início - Carla Variedades{% endblock %}
+{% block header_title %}Início{% endblock %}
+
+{% block content %}
+
+    <!-- Period Filter -->
+    <div class="flex space-x-2 mb-6">
+        <a href="?period=month"
+           class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
+                  {% if period == 'month' %}bg-green-600 text-white shadow-sm{% else %}bg-white text-gray-600 border border-gray-200 hover:bg-gray-50{% endif %}">
+            Este mês
+        </a>
+        <a href="?period=year"
+           class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
+                  {% if period == 'year' %}bg-green-600 text-white shadow-sm{% else %}bg-white text-gray-600 border border-gray-200 hover:bg-gray-50{% endif %}">
+            Este ano
+        </a>
+        <a href="?period=all"
+           class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
+                  {% if period == 'all' %}bg-green-600 text-white shadow-sm{% else %}bg-white text-gray-600 border border-gray-200 hover:bg-gray-50{% endif %}">
+            Todo período
+        </a>
+    </div>
+
+    <!-- 2×2 Metric Cards -->
+    <div class="grid grid-cols-2 gap-3 mb-4">
+
+        <!-- Faturado -->
+        <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-50">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Faturado</span>
+                <div class="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                </div>
+            </div>
+            <p class="text-lg font-bold text-gray-900 leading-tight">{{ faturado_fmt }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">Total de vendas</p>
+        </div>
+
+        <!-- Recebido -->
+        <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-50">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Recebido</span>
+                <div class="w-8 h-8 bg-green-50 rounded-xl flex items-center justify-center">
+                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+            <p class="text-lg font-bold text-green-600 leading-tight">{{ recebido_fmt }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">Vendas pagas</p>
+        </div>
+
+        <!-- A receber -->
+        <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-50">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">A receber</span>
+                <div class="w-8 h-8 bg-yellow-50 rounded-xl flex items-center justify-center">
+                    <svg class="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+            <p class="text-lg font-bold text-yellow-600 leading-tight">{{ a_receber_fmt }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">Vendas pendentes</p>
+        </div>
+
+        <!-- Custo -->
+        <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-50">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Custo</span>
+                <div class="w-8 h-8 bg-red-50 rounded-xl flex items-center justify-center">
+                    <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </div>
+            </div>
+            <p class="text-lg font-bold text-red-500 leading-tight">{{ custo_fmt }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">Custo das vendas pagas</p>
+        </div>
+
+    </div>
+
+    <!-- Lucro Líquido Banner -->
+    <div class="{% if lucro_positivo %}bg-green-600{% else %}bg-red-500{% endif %} p-6 rounded-[2rem] mb-4 shadow-sm">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-green-100 text-xs font-semibold uppercase tracking-wide mb-1">Lucro Líquido</p>
+                <p class="text-white text-2xl font-bold">{{ lucro_liquido_fmt }}</p>
+                <p class="text-green-200 text-xs mt-1">Vendas pagas — (preço de venda − custo)</p>
+            </div>
+            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart: Recebido vs A receber -->
+    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 mb-4">
+        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Recebido vs A receber — {{ chart_subtitle }}</h3>
+        <canvas id="salesChart" height="220"></canvas>
+    </div>
+
+    <!-- Chart: Valor de compra vs Valor de venda -->
+    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 mb-6">
+        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Custo de compra vs Valor de venda — {{ chart_subtitle }}</h3>
+        <canvas id="priceChart" height="220"></canvas>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script>
+    (function () {
+        var data = {{ chart_data_json|safe }};
+        var priceData = {{ chart_price_json|safe }};
+        var brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+        var brlCompact = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact', maximumFractionDigits: 1 });
+
+        var chartDefaults = {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { font: { family: 'Inter, sans-serif', size: 12 }, padding: 16 }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (ctx) {
+                            return ' ' + ctx.dataset.label + ': ' + brl.format(ctx.parsed.y);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { family: 'Inter, sans-serif', size: 11 } } },
+                y: {
+                    grid: { color: 'rgba(0,0,0,0.04)' },
+                    ticks: { font: { family: 'Inter, sans-serif', size: 11 }, callback: function (v) { return brlCompact.format(v); } }
+                }
+            }
+        };
+
+        new Chart(document.getElementById('salesChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: data.labels,
+                datasets: [
+                    { label: 'Recebido',  data: data.recebido,  backgroundColor: 'rgba(22, 163, 74, 0.85)',  borderRadius: 6, borderSkipped: false },
+                    { label: 'A receber', data: data.a_receber, backgroundColor: 'rgba(234, 179, 8, 0.85)', borderRadius: 6, borderSkipped: false }
+                ]
+            },
+            options: chartDefaults
+        });
+
+        new Chart(document.getElementById('priceChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: priceData.labels,
+                datasets: [
+                    { label: 'Valor de venda', data: priceData.venda,  backgroundColor: 'rgba(22, 163, 74, 0.85)',  borderRadius: 6, borderSkipped: false },
+                    { label: 'Custo de compra', data: priceData.compra, backgroundColor: 'rgba(239, 68, 68, 0.75)', borderRadius: 6, borderSkipped: false }
+                ]
+            },
+            options: chartDefaults
+        });
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Produtos - Revenda{% endblock %}
+{% block header_title %}Produtos{% endblock %}
+
+{% block content %}
+    <!-- Search Bar -->
+    <div class="mb-6 relative">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </span>
+        <input type="text" name="q" 
+            class="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-500 outline-none transition-all" 
+            placeholder="Buscar produto..."
+            hx-get="{% url 'products:list' %}"
+            hx-trigger="keyup changed delay:300ms"
+            hx-target="#product-list"
+            hx-indicator=".htmx-indicator">
+    </div>
+
+    <!-- Product List -->
+    <div id="product-list"
+        hx-get="{% url 'products:list' %}"
+        hx-trigger="reloadProducts from:body"
+        hx-swap="innerHTML">
+        {% include 'products/list_partial.html' %}
+    </div>
+
+    <!-- FAB -->
+    <button hx-get="{% url 'products:create' %}" hx-target="#modal-content"
+        class="fixed bottom-24 right-6 bg-green-600 hover:bg-green-700 text-white flex items-center space-x-2 px-6 py-4 rounded-3xl shadow-xl shadow-green-100 transition-all active:scale-95 z-30">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        <span class="font-bold">Novo produto</span>
+    </button>
+
+    <!-- Loading Indicator -->
+    <div class="htmx-indicator fixed top-20 right-6">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+    </div>
+{% endblock %}

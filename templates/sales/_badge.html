@@ -1,0 +1,24 @@
+{% if sale.is_paid %}
+    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-600">
+        Pago
+    </span>
+{% else %}
+    <div class="flex flex-col items-end space-y-3">
+        <span class="inline-flex items-center space-x-1 px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-600">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span>Aguardando</span>
+        </span>
+        <button
+            hx-post="{% url 'sales:mark_paid' sale.pk %}"
+            hx-target="#sale-status"
+            hx-swap="innerHTML"
+            hx-trigger="confirmed"
+            data-confirm-msg="Marcar esta venda como paga?"
+            onclick="showConfirm(this.dataset.confirmMsg, (function(btn){ return function(){ htmx.trigger(btn, 'confirmed'); }; })(this))"
+            class="text-xs font-semibold text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-2xl transition-colors active:scale-95">
+            Marcar como pago
+        </button>
+    </div>
+{% endif %}

@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Venda #{{ sale.pk }} - Carla Variedades{% endblock %}
+{% block header_title %}Detalhe da Venda{% endblock %}
+
+{% block content %}
+    <!-- Back -->
+    <div class="mb-4">
+        <a href="{% url 'sales:list' %}"
+            class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Voltar
+        </a>
+    </div>
+
+    <!-- Header Card -->
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 p-6 mb-4">
+        <div class="flex justify-between items-start mb-5">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900">Venda #{{ sale.pk }}</h2>
+                <p class="text-gray-500 text-sm mt-0.5">{{ sale.customer.name|default:"Consumidor" }}</p>
+            </div>
+            <div class="flex items-start space-x-3">
+                <div id="sale-status">
+                    {% include 'sales/_badge.html' %}
+                </div>
+                <div>
+                    <button type="button"
+                            class="text-red-400 hover:text-red-600 transition-colors"
+                            hx-delete="{% url 'sales:delete' sale.pk %}"
+                            hx-trigger="confirmed"
+                            data-confirm-msg="Tem certeza que deseja excluir esta venda? Itens serão retornados ao estoque."
+                            onclick="showConfirm(this.dataset.confirmMsg, (function(btn){ return function(){ htmx.trigger(btn, 'confirmed'); }; })(this))">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+                <p class="text-gray-400 text-xs mb-1 uppercase tracking-wide">Data</p>
+                <p class="font-medium text-gray-700">{{ sale.sale_date|date:"d/m/Y H:i" }}</p>
+            </div>
+            <div>
+                <p class="text-gray-400 text-xs mb-1 uppercase tracking-wide">Pagamento</p>
+                <p class="font-medium text-gray-700">{{ sale.get_payment_method_display }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Items Card -->
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 p-6">
+        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Itens</h3>
+
+        <div class="space-y-4">
+            {% for item in sale.items.all %}
+                <div class="flex justify-between items-center">
+                    <div class="flex-1 min-w-0 mr-4">
+                        <p class="font-medium text-gray-900 truncate">{{ item.product.name }}</p>
+                        <p class="text-sm text-gray-400">{{ item.quantity }} × R$ {{ item.unit_sale_price|floatformat:2 }}</p>
+                    </div>
+                    <span class="font-semibold text-gray-800 shrink-0">R$ {{ item.total_price|floatformat:2 }}</span>
+                </div>
+                {% if not forloop.last %}
+                    <hr class="border-gray-50">
+                {% endif %}
+            {% empty %}
+                <p class="text-gray-400 text-sm text-center py-4">Nenhum item registrado.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Total -->
+        <div class="border-t border-gray-100 mt-5 pt-4 flex justify-between items-center">
+            <span class="font-semibold text-gray-700">Total</span>
+            <span class="text-xl font-bold text-green-600">R$ {{ sale.total_price|floatformat:2 }}</span>
+        </div>
+    </div>
+{% endblock %}

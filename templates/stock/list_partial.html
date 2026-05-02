@@ -1,0 +1,89 @@
+{% if request.htmx %}
+    <div id="stock-banner" hx-swap-oob="outerHTML">
+        {% if has_low_stock %}
+            <div class="mb-6 flex items-start space-x-3 p-4 bg-red-50 border border-red-100 rounded-2xl">
+                <svg class="w-5 h-5 text-red-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <div>
+                    <p class="text-sm font-bold text-red-800">{{ low_stock_count }} produto{{ low_stock_count|pluralize }} com estoque baixo</p>
+                    {% if request.GET.low == '1' %}
+                        <a href="" hx-get="{% url 'stock:list' %}" hx-target="#stock-list" class="text-xs font-medium text-red-600 underline underline-offset-2 hover:text-red-800">Ver todos</a>
+                    {% else %}
+                        <a href="" hx-get="{% url 'stock:list' %}?low=1" hx-target="#stock-list" class="text-xs font-medium text-red-600 underline underline-offset-2 hover:text-red-800">Ver apenas baixos</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% else %}
+            <div></div>
+        {% endif %}
+    </div>
+
+    <input type="hidden" id="low-flag" name="low" value="{{ request.GET.low|default_if_none:'' }}" hx-swap-oob="outerHTML" />
+{% endif %}
+
+<div class="flex justify-end mb-3">
+    <p class="text-xs text-gray-400 font-medium">{{ page_obj.paginator.count }} produto{{ page_obj.paginator.count|pluralize }}</p>
+</div>
+
+<div class="space-y-4">
+    {% for stock in stocks %}
+        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex items-center justify-between">
+            <div class="flex-1">
+                <div class="flex items-center space-x-2 mb-1">
+                    <h3 class="font-bold text-gray-900">{{ stock.product.name }}</h3>
+                    {% if stock.quantity <= stock.product.min_stock %}
+                        <span class="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Baixo</span>
+                    {% endif %}
+                </div>
+                <p class="text-xs text-gray-400 mb-2">{{ stock.product.category|default:"Sem categoria" }}</p>
+                <p class="text-xs text-gray-500">Mínimo: <span class="font-medium">{{ stock.product.min_stock }}</span></p>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <div class="text-right mr-3">
+                    <span class="block text-2xl font-bold {% if stock.quantity <= stock.product.min_stock %}text-red-500{% else %}text-gray-900{% endif %}">
+                        {{ stock.quantity }}
+                    </span>
+                    <span class="text-[10px] text-gray-400 uppercase font-medium">Unid.</span>
+                </div>
+
+                <div class="flex flex-col space-y-2">
+                    <button hx-get="{% url 'stock:entry_create' stock.product.pk %}" hx-target="#modal-content"
+                        class="bg-green-100 text-green-600 p-2 rounded-full hover:bg-green-600 hover:text-white transition-all active:scale-90 shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    </button>
+                    <button hx-get="{% url 'stock:exit_create' stock.product.pk %}" hx-target="#modal-content"
+                        class="bg-red-100 text-red-600 p-2 rounded-full hover:bg-red-600 hover:text-white transition-all active:scale-90 shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="text-center py-12">
+            <p class="text-gray-400">Nenhum item no estoque encontrado.</p>
+        </div>
+    {% endfor %}
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+        <div class="flex justify-center items-center space-x-2 mt-8 pb-8">
+            {% if page_obj.has_previous %}
+                <button hx-get="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.low %}&low=1{% endif %}" 
+                    hx-target="#stock-list" class="p-2 bg-white rounded-xl shadow-sm border border-gray-100 text-gray-600 hover:bg-gray-50">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+            {% endif %}
+            
+            <span class="text-sm font-medium text-gray-500">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+
+            {% if page_obj.has_next %}
+                <button hx-get="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.low %}&low=1{% endif %}" 
+                    hx-target="#stock-list" class="p-2 bg-white rounded-xl shadow-sm border border-gray-100 text-gray-600 hover:bg-gray-50">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>

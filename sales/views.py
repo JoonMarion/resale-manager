@@ -39,8 +39,19 @@ class SaleListView(ProjectLoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        q = self.request.GET.get('q', '').strip()
         context['current_status'] = self.request.GET.get('status', 'all')
-        context['q'] = self.request.GET.get('q', '')
+        context['q'] = q
+
+        # Counts for status filters (respecting search query)
+        base_qs = Sale.objects.all()
+        if q:
+            base_qs = base_qs.filter(customer__name__icontains=q)
+        context['counts'] = {
+            'all': base_qs.count(),
+            'pending': base_qs.filter(is_paid=False).count(),
+            'paid': base_qs.filter(is_paid=True).count(),
+        }
         return context
 
 

@@ -11,45 +11,44 @@
         body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
-<body class="bg-gray-50 flex flex-col items-center justify-center min-h-screen p-4">
+<body class="bg-gray-50 h-screen overflow-hidden flex flex-col items-center justify-center p-4">
 
     <!-- Header -->
-    <div class="flex flex-col items-center mb-8">
-        <div class="bg-green-600 p-4 rounded-2xl shadow-lg shadow-green-100 mb-4">
-            <!-- Store icon -->
-            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="flex flex-col items-center mb-5">
+        <div class="bg-green-600 p-3 rounded-2xl shadow-lg shadow-green-100 mb-3">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
             </svg>
         </div>
-        <h1 class="text-3xl font-bold text-gray-900 mb-1">Carla Variedades</h1>
+        <h1 class="text-2xl font-bold text-gray-900">Carla Variedades</h1>
     </div>
 
     <!-- Login Card -->
-    <div class="bg-white p-8 rounded-[2.5rem] shadow-sm w-full max-w-sm border border-gray-100">
-        <h2 class="text-xl font-bold text-gray-900 mb-8">Entrar</h2>
-        
-        <form method="post" class="space-y-6">
+    <div class="bg-white px-8 py-6 rounded-[2.5rem] shadow-sm w-full max-w-sm border border-gray-100">
+        <h2 class="text-lg font-bold text-gray-900 mb-5">Entrar</h2>
+
+        <form method="post" class="space-y-4">
             {% csrf_token %}
-            
+
             <div>
-                <label for="id_username" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <label for="id_username" class="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
                 <input type="text" name="username" id="id_username" required
-                    class="w-full px-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all placeholder-gray-400"
+                    class="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all placeholder-gray-400"
                     placeholder="Seu email">
             </div>
 
-            <div class="relative">
-                <label for="id_password" class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+            <div>
+                <label for="id_password" class="block text-sm font-medium text-gray-700 mb-1.5">Senha</label>
                 <div class="relative">
                     <input type="password" name="password" id="id_password" required
-                        class="w-full px-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all placeholder-gray-400"
+                        class="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all placeholder-gray-400"
                         placeholder="Sua senha">
                     <button type="button" onclick="togglePassword()" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
-                        <svg id="eye-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                         </svg>
-                        <svg id="eye-off-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg id="eye-off-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"></path>
                         </svg>
                     </button>
@@ -57,19 +56,19 @@
             </div>
 
             {% if form.errors %}
-                <div class="p-4 bg-red-50 text-red-600 text-sm rounded-2xl border border-red-100">
+                <div class="p-3 bg-red-50 text-red-600 text-sm rounded-2xl border border-red-100">
                     Email ou senha incorretos. Verifique seus dados e tente novamente.
                 </div>
             {% endif %}
 
-            <div class="pt-2">
-                <button type="submit" 
-                    class="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md shadow-green-100 transition-all active:scale-[0.98]">
+            <div class="pt-1">
+                <button type="submit"
+                    class="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md shadow-green-100 transition-all active:scale-[0.98]">
                     Entrar
                 </button>
             </div>
 
-            <div class="text-center mt-4">
+            <div class="text-center">
                 <a href="{% url 'users:password_reset' %}" class="text-sm text-gray-400 hover:text-green-600 transition-colors">
                     Esqueci minha senha
                 </a>

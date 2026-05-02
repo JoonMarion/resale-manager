@@ -7,7 +7,7 @@ User=deploy
 Group=www-data
 WorkingDirectory=/home/deploy/resale_manager
 EnvironmentFile=/home/deploy/resale_manager/.env
-ExecStart=/home/deploy/resale_manager/.venv/bin/gunicorn \
+ExecStart=/home/deploy/resale_manager/venv/bin/gunicorn \
     --workers 1 \
     --bind 127.0.0.1:8000 \
     --access-logfile /var/log/gunicorn/resale_manager_access.log \

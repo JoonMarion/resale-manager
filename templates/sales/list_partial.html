@@ -7,6 +7,7 @@
             class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
                 {% if current_status == 'all' %}bg-green-600 text-white shadow-sm{% else %}bg-white text-gray-600 border border-gray-200 hover:bg-gray-50{% endif %}">
             Todas
+            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">{{ counts.all }}</span>
         </a>
         <a href="#"
             hx-get="{% url 'sales:list' %}?status=pending{% if q %}&q={{ q }}{% endif %}"
@@ -14,6 +15,7 @@
             class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
                 {% if current_status == 'pending' %}bg-yellow-500 text-white shadow-sm{% else %}bg-white text-gray-600 border border-gray-200 hover:bg-gray-50{% endif %}">
             Em aberto
+            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-600">{{ counts.pending }}</span>
         </a>
         <a href="#"
             hx-get="{% url 'sales:list' %}?status=paid{% if q %}&q={{ q }}{% endif %}"
@@ -21,6 +23,7 @@
             class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
                 {% if current_status == 'paid' %}bg-green-600 text-white shadow-sm{% else %}bg-white text-gray-600 border border-gray-200 hover:bg-gray-50{% endif %}">
             Pagas
+            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-600">{{ counts.paid }}</span>
         </a>
     </div>
 </div>

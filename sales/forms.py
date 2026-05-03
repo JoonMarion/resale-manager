@@ -10,13 +10,15 @@ class SaleForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['customer'].queryset = Customer.objects.filter(active=True).order_by('name')
         self.fields['customer'].empty_label = 'Selecione um cliente...'
+        self.fields['installments'].required = False
 
     class Meta:
         model = Sale
-        fields = ['customer', 'payment_method', 'is_paid']
+        fields = ['customer', 'payment_method', 'installments', 'is_paid']
         labels = {
             'customer': 'Cliente',
             'payment_method': 'Forma de Pagamento',
+            'installments': 'Parcelas',
             'is_paid': 'Já pago?',
         }
 

@@ -15,6 +15,7 @@ class Sale(BaseModel):
     sale_date = models.DateTimeField(auto_now_add=True, verbose_name='Data da Venda')
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default='pix', verbose_name='Método de Pagamento')
     is_paid = models.BooleanField(default=False, verbose_name='Pago')
+    installments = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name='Parcelas')
 
     class Meta:
         verbose_name = 'Venda'

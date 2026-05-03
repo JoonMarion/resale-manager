@@ -125,3 +125,16 @@ class SaleCreateView(ProjectLoginRequiredMixin, View):
                 return response
             return redirect('sales:list')
         return render(request, 'sales/form.html', self._build_context(form, formset))
+
+
+class SaleReceiptView(View):
+    """Public receipt view — no login required so it can be shared with customers."""
+
+    def get(self, request, pk):
+        sale = get_object_or_404(
+            Sale.objects.select_related('customer').prefetch_related('items__product'),
+            pk=pk,
+        )
+        from users.models import UserProfile
+        profile = UserProfile.objects.select_related('user').first()
+        return render(request, 'sales/receipt.html', {'sale': sale, 'profile': profile})

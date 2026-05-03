@@ -46,7 +46,15 @@
             </div>
             <div>
                 <p class="text-gray-400 text-xs mb-1 uppercase tracking-wide">Pagamento</p>
-                <p class="font-medium text-gray-700">{{ sale.get_payment_method_display }}</p>
+                <p class="font-medium text-gray-700">
+                    {{ sale.get_payment_method_display }}
+                    {% if sale.installments and sale.installments > 1 %}
+                        <span class="text-xs text-gray-400">({{ sale.installments }}x)</span>
+                    {% endif %}
+                </p>
+                {% if sale.installments and sale.installments > 1 %}
+                    <p class="text-xs text-amber-600 mt-1">⚠️ Juros da maquininha não inclusos</p>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -78,4 +86,14 @@
             <span class="text-xl font-bold text-green-600">R$ {{ sale.total_price|floatformat:2 }}</span>
         </div>
     </div>
+
+    <!-- Share receipt button -->
+    <a href="{% url 'sales:receipt' sale.pk %}" target="_blank"
+       class="mt-4 flex items-center justify-center gap-2 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 rounded-[2rem] shadow-lg shadow-green-100 transition-all active:scale-[0.98]">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+        </svg>
+        Compartilhar comprovante
+    </a>
 {% endblock %}

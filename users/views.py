@@ -7,6 +7,8 @@ from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
 
+from .models import UserProfile
+
 
 class CustomLoginView(LoginView):
     template_name = 'login.html'
@@ -21,8 +23,25 @@ class CustomLogoutView(LogoutView):
 
 
 class ProfileView(LoginRequiredMixin, View):
+    def _get_or_create_profile(self, user):
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        return profile
+
     def get(self, request):
-        return render(request, 'users/profile.html')
+        profile = self._get_or_create_profile(request.user)
+        return render(request, 'users/profile.html', {'profile': profile})
+
+    def post(self, request):
+        profile = self._get_or_create_profile(request.user)
+        store_name = request.POST.get('store_name', '').strip()
+        store_phone = request.POST.get('store_phone', '').strip()
+        if 'photo' in request.FILES:
+            profile.photo = request.FILES['photo']
+        profile.store_name = store_name
+        profile.store_phone = store_phone
+        profile.save()
+        messages.success(request, 'Perfil atualizado com sucesso!')
+        return redirect('users:profile')
 
 
 class InAppPasswordChangeView(LoginRequiredMixin, View):

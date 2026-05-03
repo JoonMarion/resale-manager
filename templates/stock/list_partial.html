@@ -68,7 +68,7 @@
 
     <!-- Pagination -->
     {% if is_paginated %}
-        <div class="flex justify-start sm:justify-center items-center space-x-2 mt-8 pb-8">
+        <div class="flex justify-start ml-2 sm:ml-0 sm:justify-center items-center space-x-2 mt-8 pb-8">
             {% if page_obj.has_previous %}
                 <button hx-get="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.low %}&low=1{% endif %}" 
                     hx-target="#stock-list" class="p-2 bg-white rounded-xl shadow-sm border border-gray-100 text-gray-600 hover:bg-gray-50">

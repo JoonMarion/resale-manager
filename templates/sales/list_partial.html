@@ -79,7 +79,7 @@
 
     <!-- Pagination -->
     {% if is_paginated %}
-        <div class="flex justify-start sm:justify-center items-center space-x-2 mt-8 pb-8">
+        <div class="flex justify-start ml-2 sm:ml-0 sm:justify-center items-center space-x-2 mt-8 pb-8">
             {% if page_obj.has_previous %}
                 <button
                     hx-get="{% url 'sales:list' %}?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if current_status != 'all' %}&status={{ current_status }}{% endif %}"

@@ -1,142 +1,199 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Comprovante de venda {{ sale.pk }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{% static 'core/js/tailwind.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'core/css/inter.css' %}">
+    <script src="{% static 'core/js/html2canvas.min.js' %}"></script>
     <style>
-        body { background: #f5f5f5; }
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f0f0f0; margin: 0; }
         @media print {
-            body { background: white; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            html, body {
+                background: white !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                display: block !important;
+                min-height: auto !important;
+            }
             .no-print { display: none !important; }
+            #receipt-card {
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                margin: 0 !important;
+            }
         }
     </style>
 </head>
-<body class="min-h-screen flex items-start justify-center py-8 px-4">
-    <div class="bg-white w-full max-w-sm rounded-2xl shadow-lg overflow-hidden">
+<body class="min-h-screen flex items-start justify-center pt-0 pb-24">
 
-        <!-- Header / Store info -->
-        <div class="bg-gray-800 text-white text-center py-6 px-4">
+    <div id="receipt-card" style="background:#fff; width:100%; max-width:360px; border-radius:0 0 16px 16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.10);">
+
+        <!-- Cabeçalho da loja -->
+        <div style="background:#1e2533; text-align:center; padding:28px 20px 22px;">
             {% if profile and profile.photo %}
-                <img src="{{ profile.photo.url }}" alt="Logo" class="w-16 h-16 rounded-full mx-auto mb-3 object-cover border-2 border-white">
+                <img src="{{ profile.photo.url }}" alt="Logo"
+                     style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,0.85);margin:0 auto 12px;display:block;">
             {% else %}
-                <div class="w-16 h-16 rounded-full mx-auto mb-3 bg-gray-600 flex items-center justify-center">
-                    <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                <div style="width:72px;height:72px;border-radius:50%;border:3px solid rgba(255,255,255,0.4);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;">
+                    <svg width="36" height="36" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                     </svg>
                 </div>
             {% endif %}
-            <p class="font-bold text-lg">{% if profile and profile.store_name %}{{ profile.store_name }}{% else %}{{ request.user.get_full_name|default:request.user.username }}{% endif %}</p>
+            <p style="color:#fff;font-size:17px;font-weight:700;margin:0 0 4px;">
+                {% if profile and profile.store_name %}{{ profile.store_name }}{% else %}{{ request.user.get_full_name|default:request.user.username }}{% endif %}
+            </p>
             {% if profile and profile.store_phone %}
-                <p class="text-sm text-gray-300">Telefone: {{ profile.store_phone }}</p>
+                <p style="color:rgba(255,255,255,0.65);font-size:13px;margin:0;">Telefone: {{ profile.store_phone }}</p>
             {% endif %}
         </div>
 
-        <!-- Body -->
-        <div class="px-6 py-5 text-gray-700 text-sm">
+        <!-- Corpo do comprovante -->
+        <div style="background:#fff;padding:24px 24px 20px;">
 
-            <!-- Title -->
-            <p class="text-center font-semibold text-gray-800 text-base mb-1">Comprovante de venda {{ sale.pk }}</p>
+            <!-- Título -->
+            <p style="text-align:center;font-size:15px;font-weight:600;color:#1a1a1a;margin:0 0 6px;">
+                Comprovante de venda {{ sale.pk }}
+            </p>
 
-            <!-- Customer -->
-            <div class="text-center mb-5 text-gray-500 text-xs">
-                <p class="font-medium text-gray-700 text-sm">{{ sale.customer.name|default:"Consumidor" }}</p>
-                <p>{{ sale.customer.address|default:"Endereço não informado" }}</p>
-                {% if sale.customer.phone %}<p>Telefone: {{ sale.customer.phone }}</p>{% endif %}
-            </div>
-
-            <!-- Total -->
-            <p class="text-center text-4xl font-bold text-gray-900 mb-6">R$ {{ sale.total_price|floatformat:2 }}</p>
-
-            <!-- Items -->
-            <div class="mb-4">
-                {% for item in sale.items.all %}
-                    <div class="mb-3">
-                        <p class="font-semibold text-gray-800">{{ item.product.name }}</p>
-                        <div class="flex justify-between text-gray-500">
-                            <span>R$ {{ item.unit_sale_price|floatformat:2 }}</span>
-                            <span>x{{ item.quantity }} &nbsp; R$ {{ item.total_price|floatformat:2 }}</span>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-
-            <hr class="border-gray-100 mb-4">
-
-            <!-- Summary rows -->
-            <div class="space-y-1 text-xs text-gray-500 mb-4">
-                <div class="flex justify-between"><span>Subtotal</span><span>R$ {{ sale.total_price|floatformat:2 }}</span></div>
-            </div>
-
-            <!-- Payment -->
-            <div class="border-t border-gray-100 pt-3 text-sm">
-                <div class="flex justify-between font-semibold text-gray-800 mb-1">
-                    <span>
-                        {% if sale.payment_method == 'card' and sale.installments and sale.installments > 1 %}
-                            Crédito Parcelado
-                        {% else %}
-                            {{ sale.get_payment_method_display }}
-                        {% endif %}
-                    </span>
-                    <span>R$ {{ sale.total_price|floatformat:2 }}{% if sale.payment_method == 'card' and sale.installments and sale.installments > 1 %} em {{ sale.installments }}x{% endif %}</span>
-                </div>
-                {% if sale.payment_method == 'card' and sale.installments and sale.installments > 1 %}
-                    <p class="text-xs text-amber-600 mt-1">* Juros da maquininha não inclusos neste valor.</p>
+            <!-- Cliente -->
+            <div style="text-align:center;margin-bottom:20px;">
+                <p style="font-size:14px;font-weight:600;color:#1a1a1a;margin:0 0 2px;">{{ sale.customer.name|default:"Consumidor" }}</p>
+                <p style="font-size:12px;color:#888;margin:0 0 1px;">{{ sale.customer.address|default:"Endereço não informado" }}</p>
+                {% if sale.customer.phone %}
+                    <p style="font-size:12px;color:#888;margin:0;">Telefone: {{ sale.customer.phone }}</p>
                 {% endif %}
             </div>
 
-            <!-- Seller -->
-            {% if profile %}
-            <div class="flex justify-between text-sm text-gray-600 mt-2">
-                <span class="font-semibold">Vendedor</span>
-                <span>{{ profile.user.get_full_name|default:profile.user.username }}</span>
+            <!-- Total em destaque -->
+            <p style="text-align:center;font-size:38px;font-weight:800;color:#1a1a1a;margin:0 0 24px;letter-spacing:-1px;">
+                R$&nbsp;{{ sale.total_price|floatformat:2 }}
+            </p>
+
+            <!-- Itens -->
+            {% for item in sale.items.all %}
+                <div style="margin-bottom:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                        <span style="font-size:14px;font-weight:700;color:#1a1a1a;">{{ item.product.name }}</span>
+                        <span style="font-size:13px;font-weight:600;color:#1a1a1a;white-space:nowrap;margin-left:8px;">R$ {{ item.total_price|floatformat:2 }}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin-top:2px;">
+                        <span style="font-size:12px;color:#999;">R$ {{ item.unit_sale_price|floatformat:2 }}</span>
+                        <span style="font-size:12px;color:#999;">x{{ item.quantity }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+
+            <!-- Divisor -->
+            <div style="border-top:1px solid #ebebeb;margin:16px 0;"></div>
+
+            <!-- Subtotal -->
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span style="font-size:12px;color:#999;">Subtotal</span>
+                <span style="font-size:12px;color:#999;">R$ {{ sale.total_price|floatformat:2 }}</span>
             </div>
+
+            <!-- Divisor -->
+            <div style="border-top:1px solid #ebebeb;margin:12px 0;"></div>
+
+            <!-- Pagamento -->
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+                <span style="font-size:14px;font-weight:700;color:#1a1a1a;">
+                    {% if sale.payment_method == 'card' and sale.installments and sale.installments > 1 %}Crédito Parcelado{% else %}{{ sale.get_payment_method_display }}{% endif %}
+                </span>
+                <span style="font-size:13px;font-weight:600;color:#1a1a1a;">
+                    R$ {{ sale.total_price|floatformat:2 }}{% if sale.payment_method == 'card' and sale.installments and sale.installments > 1 %} em {{ sale.installments }}x{% endif %}
+                </span>
+            </div>
+            {% if sale.payment_method == 'card' and sale.installments and sale.installments > 1 %}
+                <p style="font-size:11px;color:#d97706;margin:0 0 8px;">* Juros da maquininha não inclusos neste valor.</p>
             {% endif %}
 
-            <!-- Date -->
-            <p class="text-center text-xs text-gray-400 mt-6">
+            <!-- Vendedor -->
+            {% if profile %}
+                <div style="display:flex;justify-content:space-between;margin-top:10px;">
+                    <span style="font-size:13px;font-weight:700;color:#1a1a1a;">Vendedor</span>
+                    <span style="font-size:13px;color:#444;">{{ profile.user.get_full_name|default:profile.user.username }}</span>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Rodapé com data -->
+        <div style="background:#f9f9f9;border-top:1px solid #ebebeb;text-align:center;padding:14px 20px 18px;">
+            <p style="font-size:12px;color:#aaa;margin:0;">
                 {{ sale.sale_date|date:"j \d\e F \d\e Y \à\s h:iA" }}
             </p>
         </div>
     </div>
 
-    <!-- Share / Print buttons -->
-    <div class="no-print fixed bottom-6 left-0 right-0 flex justify-center gap-3 px-4">
+    <!-- Botões -->
+    <div class="no-print" style="position:fixed;bottom:24px;left:0;right:0;display:flex;justify-content:center;gap:12px;padding:0 16px;">
         <button id="share-btn"
-            class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-3 rounded-2xl shadow-lg transition-all">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+            style="display:flex;align-items:center;gap:8px;background:#16a34a;color:#fff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:16px;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(22,163,74,0.35);">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
             </svg>
-            Compartilhar
-        </button>
-        <button onclick="window.print()"
-            class="flex items-center gap-2 bg-gray-700 hover:bg-gray-800 text-white font-semibold px-5 py-3 rounded-2xl shadow-lg transition-all">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-            </svg>
-            Imprimir
+            <span id="share-label">Compartilhar</span>
         </button>
     </div>
 
     <script>
+        const FILENAME = 'comprovante-{{ sale.pk }}.png';
+
         document.getElementById('share-btn').addEventListener('click', async () => {
-            const url = window.location.href;
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: 'Comprovante de venda {{ sale.pk }}',
-                        text: 'Segue o comprovante da sua compra.',
-                        url: url,
-                    });
-                } catch (e) { /* cancelled */ }
-            } else {
-                await navigator.clipboard.writeText(url);
-                const btn = document.getElementById('share-btn');
-                btn.textContent = 'Link copiado!';
-                setTimeout(() => { btn.innerHTML = '<svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>Compartilhar'; }, 2000);
+            const btn = document.getElementById('share-btn');
+            const label = document.getElementById('share-label');
+            label.textContent = 'Gerando…';
+            btn.disabled = true;
+
+            try {
+                const element = document.getElementById('receipt-card');
+                const canvas = await html2canvas(element, {
+                    scale: 3,
+                    useCORS: true,
+                    backgroundColor: '#1e2533',
+                    logging: false,
+                    onclone: (clonedDoc) => {
+                        clonedDoc.body.style.cssText = 'margin:0;padding:0;background:#1e2533;display:block;min-height:auto;';
+                        const card = clonedDoc.getElementById('receipt-card');
+                        card.style.maxWidth = 'none';
+                        card.style.width = element.offsetWidth + 'px';
+                        card.style.boxShadow = 'none';
+                        card.style.borderRadius = '0';
+                    }
+                });
+
+                canvas.toBlob(async (blob) => {
+                    try {
+                        const file = new File([blob], FILENAME, { type: 'image/png' });
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            await navigator.share({ files: [file], title: 'Comprovante de venda {{ sale.pk }}' });
+                        } else {
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = FILENAME;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                        }
+                    } catch (e) {
+                        if (e.name !== 'AbortError') alert('Erro ao compartilhar: ' + e.message);
+                    } finally {
+                        label.textContent = 'Compartilhar';
+                        btn.disabled = false;
+                    }
+                }, 'image/png');
+            } catch (e) {
+                if (e.name !== 'AbortError') alert('Erro ao gerar imagem: ' + e.message);
+                label.textContent = 'Compartilhar';
+                btn.disabled = false;
             }
         });
     </script>

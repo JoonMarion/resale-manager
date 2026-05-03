@@ -3,13 +3,16 @@
 <div class="overflow-y-auto max-h-[85vh]">
 <div class="p-6">
     <div class="flex justify-between items-center mb-6">
-        <h2 class="text-xl font-bold text-gray-900">Nova venda</h2>
+        <div>
+            <h2 class="text-xl font-bold text-gray-900">Editar Venda</h2>
+            <p class="text-xs text-gray-400 mt-0.5">#{{ sale.pk }}</p>
+        </div>
         <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
     </div>
 
-    <form hx-post="{% url 'sales:create' %}" hx-target="#modal-content" class="space-y-5">
+    <form hx-post="{% url 'sales:edit' sale.pk %}" hx-target="#modal-content" class="space-y-5">
         {% csrf_token %}
 
         <!-- Cliente -->
@@ -56,6 +59,7 @@
                 {% for item_form in formset %}
                 <div class="item-row bg-gray-50 p-3 rounded-2xl space-y-2">
                     {{ item_form.id }}
+                    {{ item_form.DELETE }}
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Produto</label>
                         {% render_field item_form.product class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm" data-searchable="true" data-placeholder="Buscar produto..." %}
@@ -72,7 +76,6 @@
                             <label class="block text-xs font-medium text-gray-600 mb-1">Valor Unitário</label>
                             {% render_field item_form.unit_sale_price class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="R$ 0,00" data-price-field="true" %}
                             {% if item_form.unit_sale_price.errors %}<p class="text-red-500 text-xs mt-1">{{ item_form.unit_sale_price.errors.0 }}</p>{% endif %}
-                            <p class="text-xs text-gray-400 mt-1">Você pode editar este valor caso a venda tenha sido feita por outro preço.</p>
                         </div>
                     </div>
                     <p class="item-total hidden text-xs font-semibold text-green-700">Total do item: R$ <span class="item-total-value">0,00</span></p>
@@ -96,7 +99,7 @@
 
         <button type="submit"
             class="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg shadow-green-100 transition-all active:scale-[0.98]">
-            Salvar Venda
+            Salvar Alterações
         </button>
     </form>
 </div>
@@ -106,6 +109,7 @@
 <script type="text/template" id="item-empty-form">
 <div class="item-row bg-gray-50 p-3 rounded-2xl space-y-2">
     {{ formset.empty_form.id }}
+    {{ formset.empty_form.DELETE }}
     <div>
         <label class="block text-xs font-medium text-gray-600 mb-1">Produto</label>
         {% render_field formset.empty_form.product class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm" data-searchable="true" data-placeholder="Buscar produto..." %}
@@ -119,7 +123,6 @@
         <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Valor Unitário</label>
             {% render_field formset.empty_form.unit_sale_price class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="R$ 0,00" data-price-field="true" %}
-            <p class="text-xs text-gray-400 mt-1">Você pode editar este valor caso a venda tenha sido feita por outro preço.</p>
         </div>
     </div>
     <p class="item-total hidden text-xs font-semibold text-green-700">Total do item: R$ <span class="item-total-value">0,00</span></p>
@@ -206,6 +209,16 @@ function makeSearchable(selectEl) {
 (function () {
     document.querySelectorAll('select[data-searchable]').forEach(makeSearchable);
 
+    function updateSaleTotal() {
+        var grand = 0;
+        document.querySelectorAll('#item-forms .item-row:not([data-deleted]) .item-total-value').forEach(function(el) {
+            var val = parseFloat(el.textContent.replace(/\./g, '').replace(',', '.')) || 0;
+            grand += val;
+        });
+        var el = document.getElementById('sale-grand-total');
+        if (el) el.textContent = grand.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
     function updateStockForRow(row) {
         if (!row) return;
         const sel = row.querySelector('select[data-searchable]');
@@ -213,16 +226,6 @@ function makeSearchable(selectEl) {
         const stockEl = row.querySelector('.stock-value');
         const stock = PRODUCT_STOCKS[sel.value];
         if (stockEl) stockEl.textContent = (stock !== undefined ? stock : 0);
-    }
-
-    function updateSaleTotal() {
-        var grand = 0;
-        document.querySelectorAll('#item-forms .item-total-value').forEach(function(el) {
-            var val = parseFloat(el.textContent.replace(/\./g, '').replace(',', '.')) || 0;
-            grand += val;
-        });
-        var el = document.getElementById('sale-grand-total');
-        if (el) el.textContent = grand.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function updateItemTotal(row) {
@@ -292,17 +295,35 @@ function makeSearchable(selectEl) {
 
     container.addEventListener('click', function (e) {
         if (!e.target.classList.contains('remove-item')) return;
-        const rows = container.querySelectorAll('.item-row');
-        if (rows.length <= 1) { showToast('A venda deve conter ao menos um item.', 'warning'); return; }
-        e.target.closest('.item-row').remove();
-        updateSaleTotal();
-        container.querySelectorAll('.item-row').forEach(function (row, idx) {
-            row.querySelectorAll('[name], [id]').forEach(function (el) {
-                if (el.name) el.name = el.name.replace(/items-\d+-/, 'items-' + idx + '-');
-                if (el.id) el.id = el.id.replace(/items-\d+-/, 'items-' + idx + '-');
+        const row = e.target.closest('.item-row');
+
+        // Count visible (non-deleted) rows
+        const visibleRows = container.querySelectorAll('.item-row:not([data-deleted])');
+        if (visibleRows.length <= 1) {
+            showToast('A venda deve conter ao menos um item.', 'warning');
+            return;
+        }
+
+        const idInput = row.querySelector('input[name$="-id"]');
+        const deleteInput = row.querySelector('input[name$="-DELETE"]');
+
+        if (idInput && idInput.value) {
+            // Existing DB item: mark for deletion, hide visually
+            if (deleteInput) deleteInput.checked = true;
+            row.setAttribute('data-deleted', '1');
+            row.style.display = 'none';
+        } else {
+            // New item added during this edit: truly remove from DOM and re-index
+            row.remove();
+            container.querySelectorAll('.item-row').forEach(function (r, idx) {
+                r.querySelectorAll('[name], [id]').forEach(function (el) {
+                    if (el.name) el.name = el.name.replace(/items-\d+-/, 'items-' + idx + '-');
+                    if (el.id) el.id = el.id.replace(/items-\d+-/, 'items-' + idx + '-');
+                });
             });
-        });
-        totalFormsInput.value = parseInt(totalFormsInput.value) - 1;
+            totalFormsInput.value = parseInt(totalFormsInput.value) - 1;
+        }
+        updateSaleTotal();
     });
 
     // Show/hide installments field based on payment method

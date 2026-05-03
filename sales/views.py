@@ -9,7 +9,7 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 
 from .models import Sale
-from .forms import SaleForm, SaleItemFormSet
+from .forms import SaleForm, SaleItemFormSet, SaleItemEditFormSet
 from products.models import Product
 from users.mixins import ProjectLoginRequiredMixin
 from stock.models import Stock
@@ -100,7 +100,16 @@ class SaleCreateView(ProjectLoginRequiredMixin, View):
             str(p.pk): str(p.sale_price)
             for p in Product.objects.filter(active=True)
         }
-        return {'form': form, 'formset': formset, 'product_prices_json': json.dumps(prices)}
+        stocks = {
+            str(s.product_id): (s.quantity or 0)
+            for s in Stock.objects.select_related('product').all()
+        }
+        return {
+            'form': form,
+            'formset': formset,
+            'product_prices_json': json.dumps(prices),
+            'product_stocks_json': json.dumps(stocks),
+        }
 
     def get(self, request):
         form = SaleForm()
@@ -125,6 +134,79 @@ class SaleCreateView(ProjectLoginRequiredMixin, View):
                 return response
             return redirect('sales:list')
         return render(request, 'sales/form.html', self._build_context(form, formset))
+
+
+class SaleEditView(ProjectLoginRequiredMixin, View):
+    def _build_context(self, form, formset, sale):
+        prices = {
+            str(p.pk): str(p.sale_price)
+            for p in Product.objects.filter(active=True)
+        }
+        stocks = {
+            str(s.product_id): (s.quantity or 0)
+            for s in Stock.objects.select_related('product').all()
+        }
+        return {
+            'form': form,
+            'formset': formset,
+            'product_prices_json': json.dumps(prices),
+            'product_stocks_json': json.dumps(stocks),
+            'sale': sale,
+        }
+
+    def get(self, request, pk):
+        sale = get_object_or_404(Sale.objects.prefetch_related('items'), pk=pk)
+        form = SaleForm(instance=sale)
+        formset = SaleItemEditFormSet(instance=sale)
+        return render(request, 'sales/edit_form.html', self._build_context(form, formset, sale))
+
+    def post(self, request, pk):
+        sale = get_object_or_404(Sale.objects.prefetch_related('items'), pk=pk)
+        # Snapshot old items before any changes
+        old_items = {
+            item.pk: {'product': item.product, 'quantity': item.quantity}
+            for item in sale.items.all()
+        }
+        form = SaleForm(request.POST, instance=sale)
+        formset = SaleItemEditFormSet(request.POST, instance=sale)
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            instances = formset.save(commit=False)
+            # Handle items marked for deletion — return their stock
+            for item in formset.deleted_objects:
+                old = old_items.get(item.pk)
+                if old:
+                    stock, _ = Stock.objects.get_or_create(product=old['product'])
+                    stock.quantity += old['quantity']
+                    stock.save()
+                item.delete()
+            # Save updated/new items with stock reconciliation
+            for item in instances:
+                if item.pk and item.pk in old_items:
+                    # Existing item updated — return old stock, deduct new stock
+                    old = old_items[item.pk]
+                    old_stock, _ = Stock.objects.get_or_create(product=old['product'])
+                    old_stock.quantity += old['quantity']
+                    old_stock.save()
+                    new_stock, _ = Stock.objects.get_or_create(product=item.product)
+                    new_stock.quantity -= item.quantity
+                    new_stock.save()
+                    item.save()
+                else:
+                    # New item — post_save signal handles stock decrement
+                    item.save()
+            formset.save_m2m()
+            # Persist a success message so it's shown after redirect on the detail page
+            messages.success(request, 'Venda atualizada com sucesso.')
+            if request.htmx:
+                from django.urls import reverse
+                response = HttpResponse("", status=200)
+                response['HX-Reswap'] = 'none'
+                # Redirect the browser to the sale detail — the message will be shown on load
+                response['HX-Redirect'] = reverse('sales:detail', kwargs={'pk': sale.pk})
+                return response
+            return redirect('sales:detail', pk=sale.pk)
+        return render(request, 'sales/edit_form.html', self._build_context(form, formset, sale))
 
 
 class SaleReceiptView(View):

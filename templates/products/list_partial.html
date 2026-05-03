@@ -27,10 +27,19 @@
             
             <p class="text-gray-400 text-sm mb-3">{{ product.category|default:"Sem categoria" }}</p>
             
-            <div class="flex items-center space-x-4 text-sm mb-2">
-                <p class="text-gray-500">Custo <span class="font-bold text-gray-900">R$ {{ product.purchase_price|floatformat:2 }}</span></p>
-                <p class="text-gray-500">Venda <span class="font-bold text-gray-900">R$ {{ product.sale_price|floatformat:2 }}</span></p>
-                <p class="text-green-600 font-bold">Lucro R$ {{ product.profit|floatformat:2 }}</p>
+            <div class="grid grid-cols-3 gap-2 mb-2">
+                <div>
+                    <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Custo</p>
+                    <p class="text-sm font-bold text-gray-900">R$ {{ product.purchase_price|floatformat:2 }}</p>
+                </div>
+                <div>
+                    <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Venda</p>
+                    <p class="text-sm font-bold text-gray-900">R$ {{ product.sale_price|floatformat:2 }}</p>
+                </div>
+                <div>
+                    <p class="text-[10px] font-semibold text-green-500 uppercase tracking-wide mb-0.5">Lucro</p>
+                    <p class="text-sm font-bold text-green-600">R$ {{ product.profit|floatformat:2 }}</p>
+                </div>
             </div>
 
             <p class="text-sm {% if product.is_low_stock %}text-red-500 font-bold{% else %}text-gray-500{% endif %}">

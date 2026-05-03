@@ -5,6 +5,7 @@ django-htmx==1.27.0
 django-widget-tweaks==1.5.1
 gunicorn==25.3.0
 packaging==26.2
+pillow==12.2.0
 psycopg2-binary==2.9.12
 python-decouple==3.8
 sqlparse==0.5.5

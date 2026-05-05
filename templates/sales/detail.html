@@ -16,7 +16,7 @@
     </div>
 
     <!-- Header Card -->
-    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 p-6 mb-4">
+    <div class="premium-card bg-white rounded-[2rem] shadow-sm border border-gray-50 p-6 mb-4 transition-all">
         <div class="flex justify-between items-start mb-5">
             <div>
                 <h2 class="text-xl font-bold text-gray-900">Venda #{{ sale.pk }}</h2>
@@ -30,7 +30,7 @@
                     <button type="button"
                             hx-get="{% url 'sales:edit' sale.pk %}"
                             hx-target="#modal-content"
-                            class="text-gray-400 hover:text-gray-600 transition-colors">
+                            class="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                     </button>
                 </div>
@@ -49,11 +49,11 @@
 
         <div class="grid grid-cols-2 gap-4 text-sm">
             <div>
-                <p class="text-gray-400 text-xs mb-1 uppercase tracking-wide">Data</p>
+                <p class="text-gray-400 dark:text-slate-500 text-xs mb-1 uppercase tracking-wide">Data</p>
                 <p class="font-medium text-gray-700">{{ sale.sale_date|date:"d/m/Y H:i" }}</p>
             </div>
             <div>
-                <p class="text-gray-400 text-xs mb-1 uppercase tracking-wide">Pagamento</p>
+                <p class="text-gray-400 dark:text-slate-500 text-xs mb-1 uppercase tracking-wide">Pagamento</p>
                 <p class="font-medium text-gray-700">
                     {{ sale.get_payment_method_display }}
                     {% if sale.installments and sale.installments > 1 %}
@@ -68,8 +68,8 @@
     </div>
 
     <!-- Items Card -->
-    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 p-6">
-        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Itens</h3>
+    <div class="premium-card bg-white rounded-[2rem] shadow-sm border border-gray-50 p-6 transition-all">
+        <h3 class="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-4">Itens</h3>
 
         <div class="space-y-4">
             {% for item in sale.items.all %}
@@ -81,7 +81,7 @@
                     <span class="font-semibold text-gray-800 shrink-0">R$ {{ item.total_price|floatformat:2 }}</span>
                 </div>
                 {% if not forloop.last %}
-                    <hr class="border-gray-50">
+                    <hr class="border-gray-50 dark:border-slate-800/50">
                 {% endif %}
             {% empty %}
                 <p class="text-gray-400 text-sm text-center py-4">Nenhum item registrado.</p>
@@ -89,7 +89,7 @@
         </div>
 
         <!-- Total -->
-        <div class="border-t border-gray-100 mt-5 pt-4 flex justify-between items-center">
+        <div class="border-t border-gray-100 dark:border-slate-800/50 mt-5 pt-4 flex justify-between items-center">
             <span class="font-semibold text-gray-700">Total</span>
             <span class="text-xl font-bold text-green-600">R$ {{ sale.total_price|floatformat:2 }}</span>
         </div>
@@ -97,7 +97,7 @@
 
     <!-- Share receipt button -->
     <a href="{% url 'sales:receipt' sale.pk %}" target="_blank"
-       class="mt-4 flex items-center justify-center gap-2 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 rounded-[2rem] shadow-lg shadow-green-100 transition-all active:scale-[0.98]">
+       class="mt-4 flex items-center justify-center gap-2 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 rounded-[2rem] shadow-lg shadow-green-100 dark:shadow-green-900/10 transition-all active:scale-[0.98]">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>

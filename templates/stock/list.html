@@ -42,6 +42,7 @@
                 hx-target="#stock-list"
                 hx-include="[name='q'], [name='low']">
                 <option value="alpha_asc" {% if current_sort == 'alpha_asc' %}selected{% endif %}>A-Z</option>
+                <option value="alpha_desc" {% if current_sort == 'alpha_desc' %}selected{% endif %}>Z-A</option>
                 <option value="recent" {% if current_sort == 'recent' %}selected{% endif %}>Recentes</option>
                 <option value="oldest" {% if current_sort == 'oldest' %}selected{% endif %}>Antigas</option>
             </select>

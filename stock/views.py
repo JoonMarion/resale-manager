@@ -19,6 +19,7 @@ class StockListView(ProjectLoginRequiredMixin, SessionSortMixin, ListView):
     default_sort = 'alpha_asc'
     sort_options = {
         'alpha_asc': 'product__name',
+        'alpha_desc': '-product__name',
         'recent': '-created_at',
         'oldest': 'created_at',
     }

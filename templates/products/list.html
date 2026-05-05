@@ -26,7 +26,9 @@
                 hx-target="#product-list"
                 hx-include="[name='q']">
                 <option value="alpha_asc" {% if current_sort == 'alpha_asc' %}selected{% endif %}>A-Z</option>
+                <option value="alpha_desc" {% if current_sort == 'alpha_desc' %}selected{% endif %}>Z-A</option>
                 <option value="recent" {% if current_sort == 'recent' %}selected{% endif %}>Recentes</option>
+                <option value="oldest" {% if current_sort == 'oldest' %}selected{% endif %}>Antigas</option>
             </select>
             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>

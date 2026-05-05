@@ -17,7 +17,9 @@ class ProductListView(ProjectLoginRequiredMixin, SessionSortMixin, ListView):
     default_sort = 'alpha_asc'
     sort_options = {
         'alpha_asc': 'name',
+        'alpha_desc': '-name',
         'recent': '-created_at',
+        'oldest': 'created_at',
     }
 
     def get_template_names(self):

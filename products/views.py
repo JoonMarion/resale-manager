@@ -7,12 +7,18 @@ from .models import Product
 from .forms import ProductForm
 from stock.models import Stock
 from users.mixins import ProjectLoginRequiredMixin
+from core.mixins import SessionSortMixin
 
 
-class ProductListView(ProjectLoginRequiredMixin, ListView):
+class ProductListView(ProjectLoginRequiredMixin, SessionSortMixin, ListView):
     model = Product
     context_object_name = 'products'
     paginate_by = 10
+    default_sort = 'alpha_asc'
+    sort_options = {
+        'alpha_asc': 'name',
+        'recent': '-created_at',
+    }
 
     def get_template_names(self):
         if self.request.htmx:
@@ -20,11 +26,16 @@ class ProductListView(ProjectLoginRequiredMixin, ListView):
         return 'products/list.html'
 
     def get_queryset(self):
-        queryset = Product.objects.filter(active=True).order_by('-created_at')
+        queryset = Product.objects.filter(active=True).order_by(self.get_ordering())
         q = self.request.GET.get('q')
         if q:
             queryset = queryset.filter(name__icontains=q)
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['q'] = self.request.GET.get('q', '')
+        return context
 
 
 class ProductCreateView(ProjectLoginRequiredMixin, CreateView):

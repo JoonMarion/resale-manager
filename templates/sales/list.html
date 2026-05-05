@@ -4,27 +4,46 @@
 {% block header_title %}Vendas{% endblock %}
 
 {% block content %}
-    <!-- Search Bar -->
-    <div class="mb-4 relative">
-        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-        </span>
-        <input type="text" name="q" value="{{ q }}"
-            class="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-500 outline-none transition-all"
-            placeholder="Buscar por cliente..."
-            hx-get="{% url 'sales:list' %}"
-            hx-trigger="keyup changed delay:300ms"
-            hx-target="#sale-list"
-            hx-indicator=".htmx-indicator">
+    <!-- Search and Sort Bar -->
+    <div class="mb-4 flex gap-2">
+        <div class="relative flex-1">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </span>
+            <input type="text" name="q" value="{{ q }}"
+                class="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                placeholder="Buscar por cliente..."
+                hx-get="{% url 'sales:list' %}"
+                hx-trigger="keyup changed delay:300ms"
+                hx-target="#sale-list"
+                hx-indicator=".htmx-indicator"
+                hx-include="[name='sort'], [name='status']">
+        </div>
+        <div class="relative">
+            <select name="sort" 
+                class="bg-white border border-gray-100 rounded-2xl shadow-sm pl-3 pr-8 py-3 focus:ring-2 focus:ring-green-500 outline-none transition-all appearance-none cursor-pointer"
+                hx-get="{% url 'sales:list' %}"
+                hx-target="#sale-list"
+                hx-include="[name='q'], [name='status']">
+                <option value="recent" {% if current_sort == 'recent' %}selected{% endif %}>Recentes</option>
+                <option value="oldest" {% if current_sort == 'oldest' %}selected{% endif %}>Antigas</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+        </div>
     </div>
+
+    <!-- Hidden status input for HTMX inclusion -->
+    <input type="hidden" name="status" value="{{ current_status }}">
 
     <!-- Status Tabs (pill) -->
     <div id="sales-status-tabs">
         <div class="flex gap-2 mb-6 overflow-x-auto pb-1 pr-1 no-scrollbar">
             <a href="#"
-                hx-get="{% url 'sales:list' %}?status=all{% if q %}&q={{ q }}{% endif %}"
+                hx-get="{% url 'sales:list' %}?status=all{% if q %}&q={{ q }}{% endif %}&sort={{ current_sort }}"
                 hx-target="#sale-list"
                 class="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
                     {% if current_status == 'all' %}bg-green-600 text-white shadow-sm{% else %}bg-white text-gray-600 border border-gray-200 hover:bg-gray-50{% endif %}">
@@ -33,7 +52,7 @@
                     {% if current_status == 'all' %}bg-white/25 text-white{% else %}bg-gray-100 text-gray-600{% endif %}">{{ counts.all }}</span>
             </a>
             <a href="#"
-                hx-get="{% url 'sales:list' %}?status=pending{% if q %}&q={{ q }}{% endif %}"
+                hx-get="{% url 'sales:list' %}?status=pending{% if q %}&q={{ q }}{% endif %}&sort={{ current_sort }}"
                 hx-target="#sale-list"
                 class="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
                     {% if current_status == 'pending' %}bg-yellow-500 text-white shadow-sm{% else %}bg-white text-gray-600 border border-gray-200 hover:bg-gray-50{% endif %}">
@@ -42,7 +61,7 @@
                     {% if current_status == 'pending' %}bg-white/25 text-white{% else %}bg-yellow-100 text-yellow-600{% endif %}">{{ counts.pending }}</span>
             </a>
             <a href="#"
-                hx-get="{% url 'sales:list' %}?status=paid{% if q %}&q={{ q }}{% endif %}"
+                hx-get="{% url 'sales:list' %}?status=paid{% if q %}&q={{ q }}{% endif %}&sort={{ current_sort }}"
                 hx-target="#sale-list"
                 class="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
                     {% if current_status == 'paid' %}bg-green-600 text-white shadow-sm{% else %}bg-white text-gray-600 border border-gray-200 hover:bg-gray-50{% endif %}">

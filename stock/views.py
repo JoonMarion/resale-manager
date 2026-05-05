@@ -7,14 +7,21 @@ from .models import Stock, StockEntry, StockExit
 from .forms import StockEntryForm, StockExitForm
 from products.models import Product
 from users.mixins import ProjectLoginRequiredMixin
+from core.mixins import SessionSortMixin
 from django.db.models import Q
 
 
-class StockListView(ProjectLoginRequiredMixin, ListView):
+class StockListView(ProjectLoginRequiredMixin, SessionSortMixin, ListView):
     model = Stock
     context_object_name = 'stocks'
     paginate_by = 10
     template_name = 'stock/list.html'
+    default_sort = 'alpha_asc'
+    sort_options = {
+        'alpha_asc': 'product__name',
+        'recent': '-created_at',
+        'oldest': 'created_at',
+    }
 
     def get_template_names(self):
         if self.request.htmx:
@@ -22,7 +29,7 @@ class StockListView(ProjectLoginRequiredMixin, ListView):
         return self.template_name
 
     def get_queryset(self):
-        queryset = Stock.objects.filter(product__active=True).select_related('product').order_by('product__name')
+        queryset = Stock.objects.filter(product__active=True).select_related('product').order_by(self.get_ordering())
         
         # Search by product name
         q = self.request.GET.get('q')
@@ -46,6 +53,7 @@ class StockListView(ProjectLoginRequiredMixin, ListView):
         low_stock_count = low_stock_qs.count()
         context['low_stock_count'] = low_stock_count
         context['has_low_stock'] = low_stock_count > 0
+        context['q'] = self.request.GET.get('q', '')
         return context
 
 

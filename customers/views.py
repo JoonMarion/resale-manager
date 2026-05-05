@@ -6,12 +6,20 @@ import json
 from .models import Customer
 from .forms import CustomerForm
 from users.mixins import ProjectLoginRequiredMixin
+from core.mixins import SessionSortMixin
 
 
-class CustomerListView(ProjectLoginRequiredMixin, ListView):
+class CustomerListView(ProjectLoginRequiredMixin, SessionSortMixin, ListView):
     model = Customer
     context_object_name = 'customers'
     paginate_by = 10
+    default_sort = 'alpha_asc'
+    sort_options = {
+        'alpha_asc': 'name',
+        'alpha_desc': '-name',
+        'recent': '-created_at',
+        'oldest': 'created_at',
+    }
 
     def get_template_names(self):
         if self.request.htmx:
@@ -19,11 +27,16 @@ class CustomerListView(ProjectLoginRequiredMixin, ListView):
         return 'customers/list.html'
 
     def get_queryset(self):
-        queryset = Customer.objects.filter(active=True).order_by('name')
+        queryset = Customer.objects.filter(active=True).order_by(self.get_ordering())
         q = self.request.GET.get('q')
         if q:
             queryset = queryset.filter(name__icontains=q)
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['q'] = self.request.GET.get('q', '')
+        return context
 
 
 class CustomerCreateView(ProjectLoginRequiredMixin, CreateView):

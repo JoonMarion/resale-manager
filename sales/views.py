@@ -13,12 +13,18 @@ from .forms import SaleForm, SaleItemFormSet, SaleItemEditFormSet
 from products.models import Product
 from users.mixins import ProjectLoginRequiredMixin
 from stock.models import Stock
+from core.mixins import SessionSortMixin
 
 
-class SaleListView(ProjectLoginRequiredMixin, ListView):
+class SaleListView(ProjectLoginRequiredMixin, SessionSortMixin, ListView):
     model = Sale
     context_object_name = 'sales'
     paginate_by = 10
+    default_sort = 'recent'
+    sort_options = {
+        'recent': '-sale_date',
+        'oldest': 'sale_date',
+    }
 
     def get_template_names(self):
         if self.request.htmx:
@@ -26,7 +32,7 @@ class SaleListView(ProjectLoginRequiredMixin, ListView):
         return 'sales/list.html'
 
     def get_queryset(self):
-        queryset = Sale.objects.select_related('customer').prefetch_related('items').order_by('-sale_date')
+        queryset = Sale.objects.select_related('customer').prefetch_related('items').order_by(self.get_ordering())
         q = self.request.GET.get('q', '').strip()
         if q:
             queryset = queryset.filter(customer__name__icontains=q)

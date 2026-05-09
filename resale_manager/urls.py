@@ -21,4 +21,9 @@ urlpatterns = [
 
     # Root redirect to dashboard
     path('', RedirectView.as_view(url='/dashboard/', permanent=False)),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+if getattr(settings, 'USE_CATALOG', False):
+    urlpatterns.append(path('catalogo/', include('catalog.urls')))
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

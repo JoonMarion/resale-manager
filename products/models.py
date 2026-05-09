@@ -15,6 +15,17 @@ class Product(BaseModel):
     sale_price = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Preço de Venda')
     min_stock = models.IntegerField(default=5, verbose_name='Estoque Mínimo')
     description = models.TextField(blank=True, null=True, verbose_name='Descrição')
+    
+    # Catalog fields
+    show_in_catalog = models.BooleanField(default=False, verbose_name='Exibir no catálogo?')
+    catalog_category = models.ForeignKey(
+        'catalog.Category', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='products',
+        verbose_name='Categoria do Catálogo'
+    )
 
     class Meta:
         verbose_name = 'Produto'
@@ -28,7 +39,16 @@ class Product(BaseModel):
     def is_low_stock(self):
         return self.stock.quantity <= self.min_stock if hasattr(self, 'stock') else True
 
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        super().clean()
+        if self.show_in_catalog and not self.catalog_category:
+            raise ValidationError({
+                'catalog_category': 'A categoria do catálogo é obrigatória quando o produto é exibido no catálogo.'
+            })
+
     def save(self, *args, **kwargs):
+        self.clean()
         if not self.sku or self.sku == 'AUTO':
             import uuid
             self.sku = str(uuid.uuid4())[:8].upper()

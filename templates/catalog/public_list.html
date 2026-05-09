@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Produtos</title>
+    {% load static %}
+    <script src="{% static 'core/js/tailwind.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'core/css/inter.css' %}">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="text-slate-900 pb-24">
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-100 px-6 py-4 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-500">
+                Catálogo
+            </h1>
+            {% if request.user.is_authenticated %}
+                <a href="{% url 'dashboard:index' %}" class="text-sm font-medium text-gray-500 hover:text-green-600 transition-colors">Voltar ao Sistema</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Search and Filters -->
+    <div class="max-w-4xl mx-auto px-4 mt-8 mb-6 space-y-4">
+        <form method="get" class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+                <svg class="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Buscar produtos..." class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 outline-none transition-all shadow-sm">
+            </div>
+            
+            {% if current_category %}
+                <input type="hidden" name="category" value="{{ current_category }}">
+            {% endif %}
+            
+            <div class="relative min-w-[160px]">
+                <select name="sort" onchange="this.form.submit()" class="w-full pl-4 pr-10 py-3 appearance-none bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 outline-none transition-all shadow-sm cursor-pointer text-gray-700">
+                    <option value="name_asc" {% if current_sort == 'name_asc' %}selected{% endif %}>A - Z</option>
+                    <option value="name_desc" {% if current_sort == 'name_desc' %}selected{% endif %}>Z - A</option>
+                    <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Menor Preço</option>
+                    <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Maior Preço</option>
+                </select>
+                <svg class="w-5 h-5 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+            
+            <button type="submit" class="hidden">Buscar</button>
+        </form>
+
+        <!-- Root Category Tabs -->
+        {% if root_categories %}
+        <div class="flex overflow-x-auto gap-2 pb-2 no-scrollbar">
+            <a href="?q={{ search_query }}&sort={{ current_sort }}" class="whitespace-nowrap px-5 py-2 rounded-xl text-sm font-medium transition-all {% if not current_category %}bg-slate-800 text-white shadow-md{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-50{% endif %}">
+                Todas as Raízes
+            </a>
+            {% for cat in root_categories %}
+            <a href="?category={{ cat.slug }}&q={{ search_query }}&sort={{ current_sort }}" class="whitespace-nowrap px-5 py-2 rounded-xl text-sm font-medium transition-all {% if parent_category and parent_category.slug == cat.slug or current_category == cat.slug %}bg-slate-800 text-white shadow-md{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-50{% endif %}">
+                {{ cat.name }}
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Subcategory Pills (Level 2) -->
+        {% if subcategories %}
+        <div class="flex overflow-x-auto gap-2 pb-2 mt-2 no-scrollbar">
+            <a href="?category={{ parent_category.slug }}&q={{ search_query }}&sort={{ current_sort }}" class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all {% if current_category == parent_category.slug %}bg-green-100 text-green-700{% else %}bg-slate-100 text-slate-500 hover:bg-slate-200{% endif %}">
+                Tudo de {{ parent_category.name }}
+            </a>
+            {% for sub in subcategories %}
+            <a href="?category={{ sub.slug }}&q={{ search_query }}&sort={{ current_sort }}" class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all {% if current_category == sub.slug %}bg-green-100 text-green-700{% else %}bg-slate-100 text-slate-500 hover:bg-slate-200{% endif %}">
+                {{ sub.name }}
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Products Grid -->
+    <main class="max-w-4xl mx-auto px-4">
+        {% if products %}
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {% for product in products %}
+            <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md transition-all group flex flex-col h-full">
+                <div class="aspect-square bg-slate-50 relative overflow-hidden">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-slate-300">
+                            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                    {% endif %}
+                    {% if product.catalog_category %}
+                        <div class="absolute top-2 left-2 bg-white/90 backdrop-blur px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-700 shadow-sm">
+                            {{ product.catalog_category.name }}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="p-4 flex flex-col flex-1">
+                    <h3 class="font-semibold text-slate-900 leading-tight mb-2 line-clamp-2 flex-1">{{ product.name }}</h3>
+                    <div class="mt-auto pt-2 border-t border-slate-50">
+                        <span class="text-lg font-bold text-green-600">R$ {{ product.sale_price }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-16 px-4 bg-white rounded-3xl border border-slate-100 shadow-sm mt-8">
+            <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-5">
+                <svg class="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-2">Nenhum produto encontrado</h3>
+            <p class="text-slate-500 max-w-sm mx-auto">Não encontramos produtos que correspondam aos filtros selecionados.</p>
+            {% if search_query or current_category %}
+                <a href="{% url 'catalog:public_list' %}" class="inline-block mt-6 px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-xl transition-colors">
+                    Limpar Filtros
+                </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </main>
+
+</body>
+</html>

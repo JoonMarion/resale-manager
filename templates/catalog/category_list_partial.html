@@ -1,0 +1,59 @@
+<div class="flex justify-end mb-3">
+    <p class="text-xs text-gray-400 font-medium">{{ page_obj.paginator.count }} categoria{{ page_obj.paginator.count|pluralize }}</p>
+</div>
+
+<div class="space-y-4">
+    {% for category in categories %}
+    <div class="premium-card bg-white rounded-2xl p-5 flex justify-between items-center group cursor-pointer"
+         hx-get="{% url 'catalog:category_edit' category.pk %}" hx-target="#modal-content" hx-swap="innerHTML">
+        <div>
+            {% if category.parent %}
+                <p class="text-xs text-gray-400 mb-0.5 font-medium flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                    {{ category.parent.name }}
+                </p>
+            {% endif %}
+            <h3 class="font-semibold text-gray-900 text-lg">{{ category.name }}</h3>
+            <p class="text-xs text-gray-500 mt-1">Criada em {{ category.created_at|date:"d/m/Y" }}</p>
+        </div>
+        <div class="flex gap-2">
+            <button 
+                hx-delete="{% url 'catalog:category_delete' category.pk %}" 
+                hx-trigger="confirmed"
+                data-confirm-msg="Tem certeza que deseja excluir esta categoria? Produtos vinculados perderão essa categoria (não serão apagados)."
+                onclick="event.stopPropagation(); showConfirm(this.dataset.confirmMsg, (function(btn){ return function(){ htmx.trigger(btn, 'confirmed'); }; })(this))"
+                class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </button>
+        </div>
+    </div>
+    {% empty %}
+    <div class="text-center py-12 px-4 bg-white rounded-2xl premium-card border border-gray-100">
+        <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-1">Nenhuma categoria</h3>
+        <p class="text-sm text-gray-500 mb-4">Nenhuma categoria foi encontrada.</p>
+        <button hx-get="{% url 'catalog:category_create' %}" hx-target="#modal-content" class="text-green-600 font-medium hover:text-green-700">Criar primeira categoria</button>
+    </div>
+    {% endfor %}
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+        <div class="flex justify-start sm:justify-center items-center space-x-2 mt-8 pb-8">
+            {% if page_obj.has_previous %}
+                <button hx-get="?page={{ page_obj.previous_page_number }}" hx-target="#category-list" class="p-2 bg-white rounded-xl shadow-sm border border-gray-100 text-gray-600 hover:bg-gray-50">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+            {% endif %}
+            
+            <span class="text-sm font-medium text-gray-500">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+
+            {% if page_obj.has_next %}
+                <button hx-get="?page={{ page_obj.next_page_number }}" hx-target="#category-list" class="p-2 bg-white rounded-xl shadow-sm border border-gray-100 text-gray-600 hover:bg-gray-50">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>

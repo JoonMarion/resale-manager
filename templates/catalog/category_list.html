@@ -3,6 +3,17 @@
 {% block header_title %}Categorias{% endblock %}
 
 {% block content %}
+    <!-- Quick Actions -->
+    <div class="mb-6 flex justify-end">
+        <a href="{% url 'catalog:public_list' %}" target="_blank" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-100 rounded-2xl text-xs font-black uppercase tracking-widest text-green-600 shadow-sm hover:shadow-md transition-all active:scale-95">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
+            Ver Catálogo Público
+        </a>
+    </div>
+
     <!-- Search and Sort Bar -->
     <div class="mb-6 flex gap-2">
         <div class="relative flex-1">

@@ -1,0 +1,56 @@
+{% for category in categories %}
+    <div class="relative {% if level > 0 %}ml-4 sm:ml-8 mt-2{% endif %}">
+        <!-- Linha vertical conectora para subcategorias -->
+        {% if level > 0 %}
+            <div class="absolute -left-3 sm:-left-6 top-0 {% if forloop.last %}h-7{% else %}h-full{% endif %} w-px bg-gray-300 group-hover:bg-green-200 transition-colors"></div>
+            <div class="absolute -left-3 sm:-left-6 top-7 w-3 sm:w-6 h-px bg-gray-300 group-hover:bg-green-200 transition-colors"></div>
+        {% endif %}
+
+        <div class="premium-card bg-white rounded-2xl p-4 sm:p-5 flex justify-between items-center group cursor-pointer hover:border-green-100 transition-all border border-transparent"
+             hx-get="{% url 'catalog:category_edit' category.pk %}" hx-target="#modal-content" hx-swap="innerHTML">
+            <div class="flex items-center gap-3">
+                <!-- Ícone de Pasta/Categoria -->
+                <div class="w-10 h-10 rounded-xl {% if level == 0 %}bg-green-50 text-green-600{% else %}bg-gray-50 text-gray-400{% endif %} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                    {% if level == 0 %}
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                    {% else %}
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold text-gray-900 {% if level == 0 %}text-base sm:text-lg{% else %}text-sm sm:text-base{% endif %}">{{ category.name }}</h3>
+                    {% if level == 0 %}
+                        <p class="text-[10px] text-gray-400 uppercase tracking-wider font-bold mt-0.5">Categoria Principal</p>
+                    {% else %}
+                        <p class="text-[10px] text-gray-400 uppercase tracking-wider font-bold mt-0.5">Subcategoria</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex gap-1 sm:gap-2">
+                <button 
+                    hx-get="{% url 'catalog:category_create' %}?parent={{ category.pk }}" 
+                    hx-target="#modal-content"
+                    onclick="event.stopPropagation();"
+                    class="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-xl transition-all shrink-0"
+                    title="Adicionar Subcategoria">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                </button>
+                <button 
+                    hx-delete="{% url 'catalog:category_delete' category.pk %}" 
+                    hx-trigger="confirmed"
+                    data-confirm-msg="Tem certeza que deseja excluir esta categoria? Produtos vinculados perderão essa categoria."
+                    onclick="event.stopPropagation(); showConfirm(this.dataset.confirmMsg, (function(btn){ return function(){ htmx.trigger(btn, 'confirmed'); }; })(this))"
+                    class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Renderizar filhos se não estiver em modo busca -->
+        {% if not q and category.subcategories.exists %}
+            {% include 'catalog/_category_item_recursive.html' with categories=category.subcategories.all level=level|add:1 %}
+        {% endif %}
+    </div>
+{% endfor %}

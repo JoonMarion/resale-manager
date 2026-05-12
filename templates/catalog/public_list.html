@@ -1,134 +1,259 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo de Produtos</title>
+    <title>Catálogo de Produtos - Carla Variedades</title>
     {% load static %}
     <script src="{% static 'core/js/tailwind.js' %}"></script>
+    <script src="{% static 'core/js/htmx.min.js' %}"></script>
     <link rel="stylesheet" href="{% static 'core/css/inter.css' %}">
+    <script>
+        if (window.tailwind) {
+            tailwind.config = {
+                darkMode: 'class',
+                theme: { extend: { colors: { dark: { bg: '#020617', card: '#0f172a', border: '#1e293b' } } } }
+            }
+        }
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; }
+        .dark body { background-color: #020617; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="text-slate-900 pb-24">
+<body class="text-slate-900 dark:text-slate-100 bg-slate-50 dark:bg-slate-950 pb-24 transition-colors">
     <!-- Header -->
-    <header class="bg-white border-b border-gray-100 px-6 py-4 sticky top-0 z-40 shadow-sm">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
+    <header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 px-6 py-4 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-500">
                 Carla Variedades
             </h1>
-            {% if request.user.is_authenticated %}
-                <a href="{% url 'dashboard:index' %}" class="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br from-green-600 to-emerald-500 text-white rounded-2xl shadow-lg shadow-green-100 active:scale-90 transition-all border border-green-500/20">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-                    </svg>
-                    <span class="text-sm font-black tracking-tight uppercase">Painel</span>
-                </a>
-            {% endif %}
+            
+            <div class="flex items-center gap-2 sm:gap-4">
+                <!-- Dark Mode Toggle -->
+                <button onclick="toggleDarkMode()" class="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+                    <svg id="sun-icon" class="hidden dark:block w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z"></path></svg>
+                    <svg id="moon-icon" class="dark:hidden w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </button>
+
+                {% if request.user.is_authenticated %}
+                    <div class="flex items-center gap-2">
+                        <a href="{% url 'catalog:category_list' %}" class="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-2xl shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            <span class="text-sm font-bold">Nova Categoria</span>
+                        </a>
+                        <a href="{% url 'dashboard:index' %}" class="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br from-green-600 to-emerald-500 text-white rounded-2xl shadow-lg shadow-green-100 dark:shadow-none active:scale-90 transition-all border border-green-500/20">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                            </svg>
+                            <span class="text-sm font-black tracking-tight uppercase">Painel</span>
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </header>
 
-    <!-- Search and Filters -->
-    <div class="max-w-4xl mx-auto px-4 mt-8 mb-6 space-y-4">
-        <form method="get" class="flex flex-col sm:flex-row gap-3">
-            <div class="relative flex-1">
-                <svg class="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                <input type="text" name="q" value="{{ search_query }}" placeholder="Buscar produtos..." class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 outline-none transition-all shadow-sm">
-            </div>
-            
-            {% if current_category %}
-                <input type="hidden" name="category" value="{{ current_category }}">
-            {% endif %}
-            
-            <div class="relative min-w-[160px]">
-                <select name="sort" onchange="this.form.submit()" class="w-full pl-4 pr-10 py-3 appearance-none bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 outline-none transition-all shadow-sm cursor-pointer text-gray-700">
-                    <option value="name_asc" {% if current_sort == 'name_asc' %}selected{% endif %}>A - Z</option>
-                    <option value="name_desc" {% if current_sort == 'name_desc' %}selected{% endif %}>Z - A</option>
-                    <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Menor Preço</option>
-                    <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Maior Preço</option>
-                </select>
-                <svg class="w-5 h-5 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-            </div>
-            
-            <button type="submit" class="hidden">Buscar</button>
-        </form>
+    <!-- Layout Grid -->
+    <div class="max-w-7xl mx-auto px-4 mt-8 lg:mt-12 flex flex-col lg:flex-row gap-8">
+        
+        <!-- Sidebar (Desktop) -->
+        <aside class="hidden lg:block w-[280px] shrink-0">
+            {% include 'catalog/_public_sidebar.html' %}
+        </aside>
 
-        <!-- Root Category Tabs -->
-        {% if root_categories %}
-        <div class="flex overflow-x-auto gap-2 pb-2 no-scrollbar">
-            <a href="?q={{ search_query }}&sort={{ current_sort }}" class="whitespace-nowrap px-5 py-2 rounded-xl text-sm font-medium transition-all {% if not current_category %}bg-slate-800 text-white shadow-md{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-50{% endif %}">
-                Todas as Categorias
-            </a>
-            {% for cat in root_categories %}
-            <a href="?category={{ cat.slug }}&q={{ search_query }}&sort={{ current_sort }}" class="whitespace-nowrap px-5 py-2 rounded-xl text-sm font-medium transition-all {% if parent_category and parent_category.slug == cat.slug or current_category == cat.slug %}bg-slate-800 text-white shadow-md{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-50{% endif %}">
-                {{ cat.name }}
-            </a>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        <!-- Subcategory Pills (Level 2) -->
-        {% if subcategories %}
-        <div class="flex overflow-x-auto gap-2 pb-2 mt-2 no-scrollbar">
-            <a href="?category={{ parent_category.slug }}&q={{ search_query }}&sort={{ current_sort }}" class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all {% if current_category == parent_category.slug %}bg-green-100 text-green-700{% else %}bg-slate-100 text-slate-500 hover:bg-slate-200{% endif %}">
-                Tudo de {{ parent_category.name }}
-            </a>
-            {% for sub in subcategories %}
-            <a href="?category={{ sub.slug }}&q={{ search_query }}&sort={{ current_sort }}" class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all {% if current_category == sub.slug %}bg-green-100 text-green-700{% else %}bg-slate-100 text-slate-500 hover:bg-slate-200{% endif %}">
-                {{ sub.name }}
-            </a>
-            {% endfor %}
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Products Grid -->
-    <main class="max-w-4xl mx-auto px-4">
-        {% if products %}
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {% for product in products %}
-            <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md transition-all group flex flex-col h-full">
-                <div class="aspect-square bg-slate-50 relative overflow-hidden">
-                    {% if product.image %}
-                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    {% else %}
-                        <div class="w-full h-full flex items-center justify-center text-slate-300">
-                            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+        <!-- Main Content -->
+        <div class="flex-1 min-w-0">
+            <!-- Search and Mobile Toggle -->
+            <div class="mb-8 space-y-4">
+                <form method="get" class="space-y-4">
+                    <div class="flex gap-2">
+                        <div class="relative flex-1">
+                            <svg class="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <input type="text" name="q" value="{{ search_query }}" placeholder="Buscar produtos..." class="w-full pl-11 pr-4 py-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-[2rem] focus:ring-2 focus:ring-green-500 outline-none transition-all shadow-sm text-base dark:text-slate-100">
                         </div>
-                    {% endif %}
-                    {% if product.catalog_category %}
-                        <div class="absolute top-2 left-2 bg-white/90 backdrop-blur px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-700 shadow-sm">
-                            {{ product.catalog_category.name }}
+                        
+                        <div class="relative">
+                            <select name="sort" onchange="this.form.submit()" class="h-full pl-4 pr-10 py-3 appearance-none bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-[2rem] focus:ring-2 focus:ring-green-500 outline-none transition-all shadow-sm cursor-pointer text-gray-500 dark:text-slate-400 text-[10px] sm:text-sm font-black uppercase tracking-tighter sm:tracking-widest min-w-[90px] sm:min-w-[140px]">
+                                <option value="name_asc" {% if current_sort == 'name_asc' %}selected{% endif %}>A - Z</option>
+                                <option value="name_desc" {% if current_sort == 'name_desc' %}selected{% endif %}>Z - A</option>
+                                <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>$ Menor</option>
+                                <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>$ Maior</option>
+                            </select>
+                            <svg class="w-4 h-4 text-gray-400 absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </div>
+                    </div>
+
+                    {% if current_category_slug %}
+                        <input type="hidden" name="category" value="{{ current_category_slug }}">
                     {% endif %}
+                    
+                    <button type="button" onclick="openDrawer()" class="lg:hidden w-full flex items-center justify-center gap-3 py-4 bg-slate-900 text-white rounded-2xl shadow-xl shadow-slate-200 hover:bg-slate-800 active:scale-[0.98] transition-all">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                        <span class="text-xs font-black uppercase tracking-widest">Filtrar por Categoria</span>
+                    </button>
+                    
+                    <button type="submit" class="hidden">Buscar</button>
+                </form>
+            </div>
+
+            <!-- Breadcrumbs and Active Category Info -->
+            <div class="mb-6 flex flex-col gap-2">
+                <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 overflow-x-auto no-scrollbar pb-1">
+                    <a href="?q={{ search_query }}&sort={{ current_sort }}" class="hover:text-green-600 dark:hover:text-green-400 transition-colors whitespace-nowrap">Catálogo</a>
+                    {% for ancestor in breadcrumbs %}
+                        <svg class="w-3 h-3 text-slate-300 dark:text-slate-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        <a href="?category={{ ancestor.slug }}&q={{ search_query }}&sort={{ current_sort }}" class="hover:text-green-600 dark:hover:text-green-400 transition-colors whitespace-nowrap">{{ ancestor.name }}</a>
+                    {% endfor %}
                 </div>
-                <div class="p-4 flex flex-col flex-1">
-                    <h3 class="font-semibold text-slate-900 leading-tight mb-2 line-clamp-2 flex-1">{{ product.name }}</h3>
-                    <div class="mt-auto pt-2 border-t border-slate-50">
-                        <span class="text-lg font-bold text-green-600">R$ {{ product.sale_price }}</span>
+                
+                {% if current_category_obj %}
+                    <h2 class="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{{ current_category_obj.name }}</h2>
+                {% else %}
+                    <h2 class="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{% if search_query %}Resultados para "{{ search_query }}"{% else %}Todos os Produtos{% endif %}</h2>
+                {% endif %}
+            </div>
+
+            <!-- Products Grid -->
+            <div class="{% if products %}grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6{% else %}flex flex-col{% endif %}">
+                {% for product in products %}
+                <div class="bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:shadow-green-900/5 hover:-translate-y-1 transition-all group flex flex-col h-full">
+                    <div class="aspect-square bg-slate-50 dark:bg-slate-800 relative overflow-hidden">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                        {% else %}
+                            <div class="w-full h-full flex items-center justify-center text-slate-200">
+                                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            </div>
+                        {% endif %}
+                        {% if product.catalog_category %}
+                            <div class="absolute top-3 left-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 shadow-sm">
+                                {{ product.catalog_category.name }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="p-5 flex flex-col flex-1">
+                        <h3 class="font-bold text-slate-900 dark:text-slate-100 leading-tight mb-3 line-clamp-2 flex-1 text-sm sm:text-base group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">{{ product.name }}</h3>
+                        <div class="mt-auto pt-3 border-t border-slate-50 dark:border-slate-800 flex justify-between items-center">
+                            <span class="text-lg font-black text-green-600 dark:text-green-400">R$ {{ product.sale_price }}</span>
+                            <div class="w-8 h-8 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-300 dark:text-slate-600 group-hover:bg-green-50 dark:group-hover:bg-green-900/30 group-hover:text-green-500 dark:group-hover:text-green-400 transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            </div>
+                        </div>
                     </div>
                 </div>
+                {% empty %}
+                <div class="text-center py-20 px-4 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div class="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg class="w-12 h-12 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-900 dark:text-slate-100 mb-2">Ops! Nada por aqui.</h3>
+                    <p class="text-slate-500 dark:text-slate-400 max-w-xs mx-auto text-sm leading-relaxed">Não encontramos produtos nesta categoria com os filtros atuais.</p>
+                    {% if search_query or current_category_slug %}
+                        <a href="{% url 'catalog:public_list' %}" class="inline-block mt-8 px-8 py-3 bg-slate-900 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-500 text-white font-bold rounded-2xl transition-all shadow-xl shadow-slate-200 dark:shadow-none hover:shadow-green-100">
+                            Limpar Filtros
+                        </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
-        {% else %}
-        <div class="text-center py-16 px-4 bg-white rounded-3xl border border-slate-100 shadow-sm mt-8">
-            <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-5">
-                <svg class="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-            </div>
-            <h3 class="text-xl font-bold text-slate-900 mb-2">Nenhum produto encontrado</h3>
-            <p class="text-slate-500 max-w-sm mx-auto">Não encontramos produtos que correspondam aos filtros selecionados.</p>
-            {% if search_query or current_category %}
-                <a href="{% url 'catalog:public_list' %}" class="inline-block mt-6 px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-xl transition-colors">
-                    Limpar Filtros
-                </a>
-            {% endif %}
+    </div>
+
+    <!-- Mobile Sidebar Drawer -->
+    <div id="categoryDrawerBg" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 opacity-0 pointer-events-none transition-opacity duration-300" onclick="closeDrawer()"></div>
+    
+    <div id="categoryDrawer" class="fixed top-0 left-0 bottom-0 w-[300px] max-w-[85vw] bg-white dark:bg-slate-900 z-50 transform -translate-x-full transition-transform duration-300 ease-out shadow-2xl flex flex-col">
+        {% include 'catalog/_public_sidebar.html' %}
+    </div>
+
+    <script>
+        function toggleDarkMode() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        function openDrawer() {
+            document.getElementById('categoryDrawerBg').classList.remove('opacity-0', 'pointer-events-none');
+            document.getElementById('categoryDrawer').classList.remove('-translate-x-full');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeDrawer() {
+            document.getElementById('categoryDrawerBg').classList.add('opacity-0', 'pointer-events-none');
+            document.getElementById('categoryDrawer').classList.add('-translate-x-full');
+            document.body.style.overflow = '';
+        }
+        function toggleNode(btn) {
+            const nodeContainer = btn.closest('.group\\/node');
+            const childrenContainer = nodeContainer.querySelector('[data-children-container]');
+            const icon = btn.querySelector('svg');
+            
+            if (childrenContainer.classList.contains('hidden')) {
+                childrenContainer.classList.remove('hidden');
+                icon.classList.add('rotate-90');
+            } else {
+                childrenContainer.classList.add('hidden');
+                icon.classList.remove('rotate-90');
+            }
+        }
+
+        // Modal Logic
+        function openModal() {
+            const container = document.getElementById('modal-container');
+            const backdrop = document.getElementById('modal-backdrop');
+            const content = document.getElementById('modal-content');
+            container.classList.remove('hidden');
+            void content.offsetWidth;
+            backdrop.classList.remove('opacity-0');
+            backdrop.classList.add('opacity-100');
+            content.classList.remove('translate-y-full');
+            content.classList.add('translate-y-0');
+        }
+        function closeModal() {
+            const backdrop = document.getElementById('modal-backdrop');
+            const content = document.getElementById('modal-content');
+            backdrop.classList.remove('opacity-100');
+            backdrop.classList.add('opacity-0');
+            content.classList.remove('translate-y-0');
+            content.classList.add('translate-y-full');
+            setTimeout(() => {
+                document.getElementById('modal-container').classList.add('hidden');
+            }, 300);
+        }
+        document.body.addEventListener('htmx:afterOnLoad', function(evt) {
+            if (evt.detail.target.id === 'modal-content') {
+                openModal();
+            }
+        });
+        document.body.addEventListener('itemCreated', function() {
+            closeModal();
+            window.location.reload(); 
+        });
+        document.body.addEventListener('htmx:configRequest', function(evt) {
+            var cookie = document.cookie.split(';').find(function(c) { return c.trim().startsWith('csrftoken='); });
+            if (cookie) evt.detail.headers['X-CSRFToken'] = cookie.split('=')[1].trim();
+        });
+    </script>
+
+    <!-- Modal Container -->
+    <div id="modal-container" class="hidden fixed inset-0 z-50 flex items-end justify-center" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div id="modal-backdrop" class="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity opacity-0" aria-hidden="true" onclick="closeModal()"></div>
+        <div id="modal-content" class="relative bg-white rounded-t-[2.5rem] w-full max-w-lg shadow-2xl transform translate-y-full transition-transform duration-300 ease-out z-10 overflow-hidden">
+            <!-- Content injected here -->
         </div>
-        {% endif %}
-    </main>
+    </div>
 
 </body>
 </html>

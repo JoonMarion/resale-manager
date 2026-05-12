@@ -2,7 +2,15 @@
 
 <div class="p-8">
     <div class="flex justify-between items-center mb-8">
-        <h2 class="text-xl font-bold text-gray-900">{% if object %}Editar categoria{% else %}Nova categoria{% endif %}</h2>
+        <h2 class="text-xl font-bold text-gray-900">
+            {% if object %}
+                Editar categoria
+            {% elif parent_obj %}
+                Nova subcategoria de <span class="text-green-600">{{ parent_obj.name }}</span>
+            {% else %}
+                Nova categoria
+            {% endif %}
+        </h2>
         <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
@@ -17,16 +25,22 @@
             {% if form.name.errors %}<p class="text-red-500 text-xs mt-1">{{ form.name.errors.0 }}</p>{% endif %}
         </div>
 
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Categoria Pai (Opcional)</label>
-            {% render_field form.parent class="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 outline-none transition-all" %}
-            {% if form.parent.errors %}<p class="text-red-500 text-xs mt-1">{{ form.parent.errors.0 }}</p>{% endif %}
-            <p class="text-xs text-gray-500 mt-1">Selecione apenas se esta for uma subcategoria.</p>
-        </div>
-
         <button type="submit"
             class="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg shadow-green-100 transition-all active:scale-[0.98]">
             Salvar
         </button>
     </form>
 </div>
+
+<script>
+    // Fechar dropdown ao clicar fora
+    document.addEventListener('click', function(event) {
+        const container = document.getElementById('custom-select-container');
+        if (container && !container.contains(event.target)) {
+            const dropdown = document.getElementById('parent-dropdown');
+            if (dropdown && !dropdown.classList.contains('hidden')) {
+                dropdown.classList.add('hidden');
+            }
+        }
+    });
+</script>

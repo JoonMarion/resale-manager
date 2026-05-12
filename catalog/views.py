@@ -29,10 +29,16 @@ class CategoryListView(LoginRequiredMixin, SessionSortMixin, ListView):
         return 'catalog/category_list.html'
 
     def get_queryset(self):
-        queryset = Category.objects.all().order_by(self.get_ordering())
         q = self.request.GET.get('q')
+        queryset = Category.objects.all().order_by(self.get_ordering())
+        
         if q:
             queryset = queryset.filter(name__icontains=q)
+        else:
+            # Em modo visualização normal (sem busca), mostramos apenas as raízes
+            # para que o template renderize a árvore recursivamente.
+            queryset = queryset.filter(parent__isnull=True)
+            
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -45,6 +51,23 @@ class CategoryCreateView(LoginRequiredMixin, CreateView):
     form_class = CategoryForm
     template_name = 'catalog/category_form.html'
     success_url = reverse_lazy('catalog:category_list')
+
+    def get_initial(self):
+        initial = super().get_initial()
+        parent_id = self.request.GET.get('parent')
+        if parent_id:
+            initial['parent'] = parent_id
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['root_categories'] = Category.objects.filter(parent__isnull=True)
+        
+        parent_id = self.request.GET.get('parent')
+        if parent_id:
+            context['parent_obj'] = Category.objects.filter(pk=parent_id).first()
+            
+        return context
 
     def form_valid(self, form):
         self.object = form.save()
@@ -64,6 +87,14 @@ class CategoryUpdateView(LoginRequiredMixin, UpdateView):
     form_class = CategoryForm
     template_name = 'catalog/category_form.html'
     success_url = reverse_lazy('catalog:category_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Exclude self and descendants from potential parents to prevent circular references
+        exclude_ids = [self.object.id] + [d.id for d in self.object.get_descendants()] if self.object else []
+        context['root_categories'] = Category.objects.filter(parent__isnull=True).exclude(id__in=exclude_ids)
+        context['exclude_ids'] = exclude_ids
+        return context
 
     def form_valid(self, form):
         self.object = form.save()
@@ -115,13 +146,10 @@ class PublicCatalogView(ListView):
             # Pegar a categoria selecionada
             category = Category.objects.filter(slug=category_slug).first()
             if category:
-                # Se for pai, buscar produtos do pai E das subcategorias
-                if not category.parent:
-                    sub_ids = category.subcategories.values_list('id', flat=True)
-                    cat_ids = [category.id] + list(sub_ids)
-                    qs = qs.filter(catalog_category_id__in=cat_ids)
-                else:
-                    qs = qs.filter(catalog_category=category)
+                # Buscar produtos da categoria e de todas as suas subcategorias (N níveis)
+                descendants = category.get_descendants()
+                cat_ids = [category.id] + [d.id for d in descendants]
+                qs = qs.filter(catalog_category_id__in=cat_ids)
             
         # Searching by name
         q = self.request.GET.get('q')
@@ -143,38 +171,23 @@ class PublicCatalogView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Buscar apenas categorias raízes (parent=None) que têm produtos no catálogo
-        # ou cujas filhas tenham produtos. Para simplificar e garantir as categorias,
-        # vamos pegar todas as raízes que tenham produtos ou filhas com produtos.
-        active_cat_ids = Product.objects.filter(show_in_catalog=True, catalog_category__isnull=False).values_list('catalog_category_id', flat=True).distinct()
         
-        # Raízes ativas diretamente
-        root_categories = list(Category.objects.filter(id__in=active_cat_ids, parent__isnull=True))
-        
-        # Raízes ativas via filhas
-        children_parents = Category.objects.filter(id__in=active_cat_ids, parent__isnull=False).select_related('parent')
-        for child in children_parents:
-            if child.parent not in root_categories:
-                root_categories.append(child.parent)
-                
-        # Ordenar as raízes
-        root_categories.sort(key=lambda c: c.name)
-        
-        context['root_categories'] = root_categories
+        # Árvore completa de categorias para o Drawer (apenas raízes, o template busca os filhos)
+        context['all_categories'] = Category.objects.filter(parent__isnull=True)
         
         current_category = self.request.GET.get('category', '')
-        context['current_category'] = current_category
+        context['current_category_slug'] = current_category
         
-        # Se houver categoria selecionada, verificar se tem filhas
         if current_category:
             cat = Category.objects.filter(slug=current_category).first()
             if cat:
-                if not cat.parent: # É raiz
-                    context['subcategories'] = cat.subcategories.all()
-                    context['parent_category'] = cat
-                else: # É filha
-                    context['subcategories'] = cat.parent.subcategories.all()
-                    context['parent_category'] = cat.parent
+                context['current_category_obj'] = cat
+                context['breadcrumbs'] = cat.get_ancestors()
+                context['subcategories'] = cat.subcategories.all()
+        else:
+            context['breadcrumbs'] = []
+            context['subcategories'] = Category.objects.filter(parent__isnull=True)
+            context['current_category_obj'] = None
         
         context['search_query'] = self.request.GET.get('q', '')
         context['current_sort'] = self.request.GET.get('sort', 'name_asc')

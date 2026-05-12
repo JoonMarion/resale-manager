@@ -17,9 +17,25 @@ class Category(models.Model):
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
+    def get_ancestors(self):
+        ancestors = []
+        current = self.parent
+        while current:
+            ancestors.insert(0, current)
+            current = current.parent
+        return ancestors
+
+    def get_descendants(self):
+        descendants = []
+        for child in self.subcategories.all():
+            descendants.append(child)
+            descendants.extend(child.get_descendants())
+        return descendants
+
     def get_full_name(self):
-        if self.parent:
-            return f"{self.parent.name} > {self.name}"
+        ancestors = self.get_ancestors()
+        if ancestors:
+            return " > ".join([a.name for a in ancestors]) + f" > {self.name}"
         return self.name
 
     def __str__(self):

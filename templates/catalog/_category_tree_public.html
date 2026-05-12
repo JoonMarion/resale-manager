@@ -1,0 +1,26 @@
+{% for node in nodes %}
+    <div class="group/node">
+        <div class="flex items-center justify-between rounded-xl transition-all duration-200 {% if current_category_slug == node.slug %}bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400{% else %}hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400{% endif %}">
+            <a href="?category={{ node.slug }}&q={{ search_query }}&sort={{ current_sort }}" 
+               class="flex-1 py-2.5 px-3 text-sm font-semibold transition-colors flex items-center gap-2"
+               style="padding-left: calc({{ level }} * 1rem + 0.75rem);">
+                {% if level == 0 %}
+                    <svg class="w-4 h-4 {% if current_category_slug == node.slug %}text-green-500{% else %}text-slate-400 dark:text-slate-500{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                {% endif %}
+                {{ node.name }}
+            </a>
+            
+            {% if node.subcategories.exists %}
+                <button onclick="toggleNode(this)" class="p-2.5 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                    <svg class="w-4 h-4 transition-transform duration-300 {% if node in breadcrumbs or current_category_slug == node.slug %}rotate-90{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+            {% endif %}
+        </div>
+        
+        {% if node.subcategories.exists %}
+            <div data-children-container class="{% if not node in breadcrumbs and not current_category_slug == node.slug %}hidden{% endif %} flex flex-col mt-1 mb-1">
+                {% include 'catalog/_category_tree_public.html' with nodes=node.subcategories.all level=level|add:1 %}
+            </div>
+        {% endif %}
+    </div>
+{% endfor %}

@@ -6,6 +6,7 @@
 
 {% block content %}
     <!-- Quick Actions -->
+    {% if USE_CATALOG %}
     <div class="mb-6">
         <a href="{% url 'catalog:public_list' %}" class="flex items-center justify-between p-4 bg-white border border-gray-50 rounded-[2rem] shadow-sm hover:shadow-md transition-all group">
             <div class="flex items-center gap-3">
@@ -24,6 +25,7 @@
             </svg>
         </a>
     </div>
+    {% endif %}
 
     <!-- Period Filter -->
     <div class="flex space-x-2 mb-6">

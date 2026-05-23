@@ -224,5 +224,8 @@ class SaleReceiptView(View):
             pk=pk,
         )
         from users.models import UserProfile
-        profile = UserProfile.objects.select_related('user').first()
+        if request.user.is_authenticated:
+            profile = UserProfile.objects.select_related('user').filter(user=request.user).first()
+        else:
+            profile = UserProfile.objects.select_related('user').first()
         return render(request, 'sales/receipt.html', {'sale': sale, 'profile': profile})

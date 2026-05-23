@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumo do Pedido - Carla Variedades</title>
+    {% load static %}
+    <script src="{% static 'core/js/tailwind.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'core/css/inter.css' %}">
+    <script>
+        if (window.tailwind) {
+            tailwind.config = {
+                darkMode: 'class',
+                theme: { extend: { colors: { dark: { bg: '#020617', card: '#0f172a', border: '#1e293b' } } } }
+            }
+        }
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; }
+        .dark body { background-color: #020617; }
+    </style>
+</head>
+<body class="text-slate-900 dark:text-slate-100 bg-slate-50 dark:bg-slate-950 min-h-screen pb-12 transition-colors">
+    
+    <!-- Header -->
+    <header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 px-6 py-4 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-3xl mx-auto flex justify-between items-center">
+            <a href="{% url 'catalog:public_list' %}" class="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-500">
+                Carla Variedades
+            </a>
+            <button onclick="toggleDarkMode()" class="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+                <svg id="sun-icon" class="hidden dark:block w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z"></path></svg>
+                <svg id="moon-icon" class="dark:hidden w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 mt-8 lg:mt-12">
+        
+        <!-- Success Banner -->
+        <div class="text-center mb-10">
+            <div class="w-20 h-20 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-green-100 dark:shadow-none animate-bounce">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight mb-2">Pedido realizado com sucesso!</h1>
+            <p class="text-slate-500 dark:text-slate-400 text-lg">Seu pedido foi recebido. Agora é só enviar o número do pedido para confirmar!</p>
+        </div>
+
+        <!-- Order Card -->
+        <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden mb-8">
+            <!-- Order Header Info -->
+            <div class="p-6 sm:p-8 border-b border-slate-50 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+                <div class="flex flex-wrap justify-between items-center gap-4">
+                    <div>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 block mb-1">Número do Pedido</span>
+                        <h2 class="text-2xl font-black text-slate-900 dark:text-slate-100">{{ pedido.numero_pedido }}</h2>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 block mb-1">Status</span>
+                        <span class="px-4 py-1.5 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 text-xs font-bold rounded-full">
+                            {{ pedido.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+                <div class="mt-6 grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 block mb-1">Data e Hora</span>
+                        <p class="text-sm font-bold text-slate-700 dark:text-slate-300">{{ pedido.criado_em|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    {% if pedido.cliente_nome %}
+                    <div class="text-right">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 block mb-1">Cliente</span>
+                        <p class="text-sm font-bold text-slate-700 dark:text-slate-300">{{ pedido.cliente_nome }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Items List -->
+            <div class="p-6 sm:p-8">
+                <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-6">Itens do Pedido</h3>
+                <div class="space-y-4">
+                    {% for item in pedido.itens.all %}
+                    <div class="flex items-center gap-4 py-4 {% if not forloop.last %}border-b border-slate-50 dark:border-slate-800{% endif %}">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-slate-900 dark:text-slate-100 leading-tight mb-1">{{ item.produto.name|default:"Produto removido" }}</h4>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">{{ item.quantidade }}x R$ {{ item.preco_unitario }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-black text-slate-900 dark:text-slate-100">R$ {{ item.subtotal }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Total -->
+                <div class="mt-8 pt-8 border-t-2 border-dashed border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                    <span class="text-xl font-black text-slate-900 dark:text-slate-100">Total Geral</span>
+                    <span class="text-3xl font-black text-green-600 dark:text-green-400">R$ {{ pedido.total }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Call to Action -->
+        <div class="bg-gradient-to-br from-green-600 to-emerald-500 rounded-[2.5rem] p-8 text-center text-white shadow-xl shadow-green-200 dark:shadow-none mb-10">
+            <p class="text-white/80 font-bold uppercase tracking-widest text-xs mb-4">Ação Necessária</p>
+            <h3 class="text-2xl font-black mb-6">Para confirmar seu pedido, envie o número <span class="bg-white/20 px-2 rounded-lg">{{ pedido.numero_pedido }}</span> para a gente pelo WhatsApp! 😊</h3>
+            
+            <a href="{{ whatsapp_link }}" target="_blank" class="inline-flex items-center gap-3 px-8 py-4 bg-white text-green-600 hover:bg-green-50 font-black rounded-2xl transition-all active:scale-95 shadow-lg">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .004 5.411.001 12.045c0 2.121.54 4.192 1.566 6.027L0 24l6.105-1.602a11.832 11.832 0 005.937 1.57h.005c6.637 0 12.048-5.411 12.051-12.046a11.824 11.824 0 00-3.536-8.432z"></path>
+                </svg>
+                Enviar pedido pelo WhatsApp
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center space-y-4">
+            <a href="{% url 'catalog:public_list' %}" class="inline-flex items-center gap-2 text-slate-500 dark:text-slate-400 font-bold hover:text-green-600 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Ver mais produtos
+            </a>
+            <p class="text-[10px] text-slate-400 dark:text-slate-600 uppercase tracking-[0.2em]">Guarde este número de pedido: {{ pedido.numero_pedido }}</p>
+        </div>
+
+    </main>
+
+    <script>
+        function toggleDarkMode() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+    </script>
+</body>
+</html>

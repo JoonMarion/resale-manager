@@ -1,0 +1,5 @@
+{% if cart|length > 0 %}
+<span class="absolute -top-1 -right-1 w-5 h-5 bg-green-600 text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-white dark:border-slate-900 animate-pulse">
+    {{ cart|length }}
+</span>
+{% endif %}

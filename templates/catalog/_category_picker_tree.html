@@ -1,0 +1,30 @@
+{% for node in nodes %}
+    <div class="group/picker-node">
+        <div class="flex items-center justify-between rounded-xl transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+            <button type="button"
+                    onclick="selectCategory('{{ node.id }}', '{{ node.name }}', this)"
+                    data-category-id="{{ node.id }}"
+                    class="flex-1 py-2 px-3 text-sm font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-2 text-left transition-colors picker-category-btn"
+                    style="padding-left: calc({{ level }} * 0.75rem + 0.75rem);">
+                <svg class="w-4 h-4 text-slate-400 dark:text-slate-500 category-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                </svg>
+                <span class="category-name">{{ node.name }}</span>
+            </button>
+            
+            {% if node.subcategories.exists %}
+                <button type="button" onclick="togglePickerNode(this)" class="p-2.5 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                    <svg class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            {% endif %}
+        </div>
+        
+        {% if node.subcategories.exists %}
+            <div data-children-container class="hidden flex flex-col mt-1 mb-1 border-l border-slate-100 dark:border-slate-800 ml-[calc({{ level }}*0.75rem+1.25rem)]">
+                {% include 'catalog/_category_picker_tree.html' with nodes=node.subcategories.all level=level|add:1 %}
+            </div>
+        {% endif %}
+    </div>
+{% endfor %}

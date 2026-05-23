@@ -6,6 +6,7 @@ import json
 from .models import Product
 from .forms import ProductForm
 from stock.models import Stock
+from catalog.models import Category
 from users.mixins import ProjectLoginRequiredMixin
 from core.mixins import SessionSortMixin
 
@@ -45,6 +46,11 @@ class ProductCreateView(ProjectLoginRequiredMixin, CreateView):
     form_class = ProductForm
     template_name = 'products/form.html'
     success_url = reverse_lazy('products:list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['root_categories'] = Category.objects.filter(parent__isnull=True)
+        return context
 
     def form_valid(self, form):
         self.object = form.save()
@@ -86,6 +92,7 @@ class ProductUpdateView(ProjectLoginRequiredMixin, UpdateView):
         ctx['is_edit'] = True
         ctx['price_locked'] = stock_qty > 0
         ctx['stock_qty'] = stock_qty
+        ctx['root_categories'] = Category.objects.filter(parent__isnull=True)
         return ctx
 
     def form_valid(self, form):

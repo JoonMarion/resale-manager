@@ -66,7 +66,9 @@
         
         <!-- Sidebar (Desktop) -->
         <aside class="hidden lg:block w-[280px] shrink-0">
-            {% include 'catalog/_public_sidebar.html' %}
+            <div class="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden sticky top-24 transition-colors">
+                {% include 'catalog/_public_sidebar.html' %}
+            </div>
         </aside>
 
         <!-- Main Content -->
@@ -95,7 +97,7 @@
                         <input type="hidden" name="category" value="{{ current_category_slug }}">
                     {% endif %}
                     
-                    <button type="button" onclick="openDrawer()" class="lg:hidden w-full flex items-center justify-center gap-3 py-4 bg-slate-900 text-white rounded-2xl shadow-xl shadow-slate-200 hover:bg-slate-800 active:scale-[0.98] transition-all">
+                    <button type="button" onclick="openDrawer()" class="lg:hidden w-full flex items-center justify-center gap-3 py-4 bg-slate-900 dark:bg-green-600 text-white rounded-2xl shadow-xl shadow-slate-200 dark:shadow-green-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
                         <span class="text-xs font-black uppercase tracking-widest">Filtrar por Categoria</span>
                     </button>
@@ -124,28 +126,63 @@
             <!-- Products Grid -->
             <div class="{% if products %}grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6{% else %}flex flex-col{% endif %}">
                 {% for product in products %}
-                <div class="bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:shadow-green-900/5 hover:-translate-y-1 transition-all group flex flex-col h-full">
+                <div class="bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:shadow-green-900/5 hover:-translate-y-1 transition-all group flex flex-col h-full {% if not product.stock or product.stock.quantity <= 0 %}opacity-75{% endif %}">
                     <div class="aspect-square bg-slate-50 dark:bg-slate-800 relative overflow-hidden">
                         {% if product.image %}
-                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 {% if not product.stock or product.stock.quantity <= 0 %}grayscale scale-105{% endif %}">
                         {% else %}
                             <div class="w-full h-full flex items-center justify-center text-slate-200">
                                 <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                             </div>
                         {% endif %}
-                        {% if product.catalog_category %}
-                            <div class="absolute top-3 left-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 shadow-sm">
-                                {{ product.catalog_category.name }}
+                        
+                        <!-- Stock Overlay -->
+                        {% if not product.stock or product.stock.quantity <= 0 %}
+                            <div class="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px] flex items-center justify-center">
+                                <span class="bg-white text-slate-900 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest shadow-xl">Fora de Estoque</span>
                             </div>
                         {% endif %}
+
+                        {% with cats=product.catalog_categories.all %}
+                        {% if cats %}
+                            <div class="absolute top-3 left-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 shadow-sm">
+                                {{ cats.0.name }}{% if cats|length > 1 %} +{{ cats|length|add:"-1" }}{% endif %}
+                            </div>
+                        {% endif %}
+                        {% endwith %}
                     </div>
                     <div class="p-5 flex flex-col flex-1">
-                        <h3 class="font-bold text-slate-900 dark:text-slate-100 leading-tight mb-3 line-clamp-2 flex-1 text-sm sm:text-base group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">{{ product.name }}</h3>
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-slate-900 dark:text-slate-100 leading-tight line-clamp-2 text-sm sm:text-base group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">{{ product.name }}</h3>
+                        </div>
+                        
+                        <!-- Stock info -->
+                        <div class="mb-4">
+                            {% if product.stock and product.stock.quantity > 0 %}
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                    {{ product.stock.quantity }} em estoque
+                                </p>
+                            {% else %}
+                                <p class="text-[10px] font-bold text-red-400 uppercase tracking-widest flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                                    Esgotado
+                                </p>
+                            {% endif %}
+                        </div>
+
                         <div class="mt-auto pt-3 border-t border-slate-50 dark:border-slate-800 flex justify-between items-center">
                             <span class="text-lg font-black text-green-600 dark:text-green-400">R$ {{ product.sale_price }}</span>
-                            <div class="w-8 h-8 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-300 dark:text-slate-600 group-hover:bg-green-50 dark:group-hover:bg-green-900/30 group-hover:text-green-500 dark:group-hover:text-green-400 transition-all">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                            </div>
+                            
+                            {% if product.stock and product.stock.quantity > 0 %}
+                                <button hx-post="{% url 'catalog:cart_add' product.id %}" hx-target="#cart-badge-container" class="w-8 h-8 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-300 dark:text-slate-600 group-hover:bg-green-50 dark:group-hover:bg-green-900/30 group-hover:text-green-500 dark:group-hover:text-green-400 transition-all">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                </button>
+                            {% else %}
+                                <div class="w-8 h-8 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-200 dark:text-slate-700 cursor-not-allowed">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -167,6 +204,16 @@
         </div>
     </div>
 
+    <!-- Floating Cart Button -->
+    <button onclick="openCart()" class="fixed bottom-8 right-8 w-16 h-16 bg-slate-900 dark:bg-green-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-90 transition-all z-40">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+        </svg>
+        <div id="cart-badge-container">
+            {% include 'catalog/_cart_badge.html' %}
+        </div>
+    </button>
+
     <!-- Mobile Sidebar Drawer -->
     <div id="categoryDrawerBg" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 opacity-0 pointer-events-none transition-opacity duration-300" onclick="closeDrawer()"></div>
     
@@ -174,7 +221,62 @@
         {% include 'catalog/_public_sidebar.html' %}
     </div>
 
+    <!-- Cart Drawer -->
+    <div id="cartDrawerBg" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 opacity-0 pointer-events-none transition-opacity duration-300" onclick="closeCart()"></div>
+    
+    <div id="cartDrawer" class="fixed top-0 right-0 bottom-0 w-[400px] max-w-[90vw] bg-white dark:bg-slate-900 z-50 transform translate-x-full transition-transform duration-300 ease-out shadow-2xl flex flex-col">
+        <div id="cart-container" class="h-full">
+            <!-- Cart content will be loaded here via HTMX -->
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-28 right-8 z-[60] flex flex-col gap-3 pointer-events-none"></div>
+
     <script>
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl transform translate-y-8 opacity-0 transition-all duration-300 pointer-events-auto bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800`;
+            
+            const icon = type === 'success' 
+                ? '<div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-xl flex items-center justify-center"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></div>'
+                : '<div class="w-8 h-8 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl flex items-center justify-center"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></div>';
+
+            toast.innerHTML = `
+                ${icon}
+                <p class="text-sm font-bold text-slate-700 dark:text-slate-200">${message}</p>
+            `;
+
+            container.appendChild(toast);
+            
+            // Animation In
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-8', 'opacity-0');
+            });
+
+            // Auto Remove
+            setTimeout(() => {
+                toast.classList.add('translate-y-8', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        document.body.addEventListener('showSuccess', function(evt) {
+            showToast(evt.detail.value);
+        });
+
+        document.body.addEventListener('showError', function(evt) {
+            showToast(evt.detail.value, 'error');
+        });
+
+        document.body.addEventListener('htmx:configRequest', function(evt) {
+            var cookie = document.cookie.split(';').find(function(c) { return c.trim().startsWith('csrftoken='); });
+            if (cookie) {
+                evt.detail.headers['X-CSRFToken'] = cookie.split('=')[1].trim();
+            }
+        });
+
         function toggleDarkMode() {
             if (document.documentElement.classList.contains('dark')) {
                 document.documentElement.classList.remove('dark');
@@ -193,6 +295,19 @@
         function closeDrawer() {
             document.getElementById('categoryDrawerBg').classList.add('opacity-0', 'pointer-events-none');
             document.getElementById('categoryDrawer').classList.add('-translate-x-full');
+            document.body.style.overflow = '';
+        }
+
+        function openCart() {
+            document.getElementById('cartDrawerBg').classList.remove('opacity-0', 'pointer-events-none');
+            document.getElementById('cartDrawer').classList.remove('translate-x-full');
+            document.body.style.overflow = 'hidden';
+            // Load cart content if empty
+            htmx.ajax('GET', '{% url "catalog:cart_detail" %}', {target:'#cart-container'});
+        }
+        function closeCart() {
+            document.getElementById('cartDrawerBg').classList.add('opacity-0', 'pointer-events-none');
+            document.getElementById('cartDrawer').classList.add('translate-x-full');
             document.body.style.overflow = '';
         }
         function toggleNode(btn) {

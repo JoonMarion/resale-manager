@@ -1,13 +1,20 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
+from django.utils.decorators import method_decorator
+from django.conf import settings
+from django.views import View
+from django.urls import reverse
 import json
-from .models import Category
+import urllib.parse
+from .models import Category, PedidoCatalogo, ItemPedidoCatalogo
 from .forms import CategoryForm
 from products.models import Product
 from core.mixins import SessionSortMixin
+from .decorators import require_catalog
+from .cart import Cart
 
 # --- Admin Views for Category ---
 
@@ -62,11 +69,12 @@ class CategoryCreateView(LoginRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['root_categories'] = Category.objects.filter(parent__isnull=True)
-        
+        context['exclude_ids'] = []
+
         parent_id = self.request.GET.get('parent')
         if parent_id:
             context['parent_obj'] = Category.objects.filter(pk=parent_id).first()
-            
+
         return context
 
     def form_valid(self, form):
@@ -132,13 +140,14 @@ class CategoryDeleteView(LoginRequiredMixin, DeleteView):
 
 # --- Public Catalog View ---
 
+@method_decorator(require_catalog, name='dispatch')
 class PublicCatalogView(ListView):
     model = Product
     template_name = 'catalog/public_list.html'
     context_object_name = 'products'
     
     def get_queryset(self):
-        qs = Product.objects.filter(show_in_catalog=True)
+        qs = Product.objects.filter(show_in_catalog=True).prefetch_related('catalog_categories', 'stock')
         
         # Filtering by category
         category_slug = self.request.GET.get('category')
@@ -149,7 +158,7 @@ class PublicCatalogView(ListView):
                 # Buscar produtos da categoria e de todas as suas subcategorias (N níveis)
                 descendants = category.get_descendants()
                 cat_ids = [category.id] + [d.id for d in descendants]
-                qs = qs.filter(catalog_category_id__in=cat_ids)
+                qs = qs.filter(catalog_categories__in=cat_ids).distinct()
             
         # Searching by name
         q = self.request.GET.get('q')
@@ -192,3 +201,121 @@ class PublicCatalogView(ListView):
         context['search_query'] = self.request.GET.get('q', '')
         context['current_sort'] = self.request.GET.get('sort', 'name_asc')
         return context
+
+@method_decorator(require_catalog, name='dispatch')
+class OrderSummaryView(DetailView):
+    model = PedidoCatalogo
+    template_name = 'catalog/order_summary.html'
+    context_object_name = 'pedido'
+    pk_url_kwarg = 'order_id'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        pedido = self.object
+        
+        # WhatsApp logic
+        whatsapp_number = getattr(settings, 'WHATSAPP_NUMBER', '')
+        order_url = self.request.build_absolute_uri()
+        
+        message = f"Olá! Gostaria de confirmar meu pedido número *{pedido.numero_pedido}*. Segue o link do pedido: {order_url}"
+        encoded_message = urllib.parse.quote(message)
+        
+        context['whatsapp_link'] = f"https://wa.me/{whatsapp_number}?text={encoded_message}"
+        context['whatsapp_number_display'] = whatsapp_number
+        
+        return context
+
+# --- Cart Views ---
+
+@method_decorator(require_catalog, name='dispatch')
+class AddToCartView(View):
+    def post(self, request, product_id):
+        cart = Cart(request)
+        product = get_object_or_404(Product, id=product_id)
+        cart.add(product=product)
+        
+        if request.htmx:
+            response = render(request, 'catalog/_cart_badge.html', {'cart': cart})
+            response['HX-Trigger'] = json.dumps({
+                'showSuccess': f'{product.name} adicionado ao carrinho!'
+            })
+            return response
+
+@method_decorator(require_catalog, name='dispatch')
+class RemoveFromCartView(View):
+    def post(self, request, product_id):
+        cart = Cart(request)
+        product = get_object_or_404(Product, id=product_id)
+        cart.remove(product)
+        
+        if request.htmx:
+            return render(request, 'catalog/_cart_drawer.html', {'cart': cart})
+        return HttpResponse(status=204)
+
+@method_decorator(require_catalog, name='dispatch')
+class UpdateCartView(View):
+    def post(self, request, product_id):
+        cart = Cart(request)
+        product = get_object_or_404(Product, id=product_id)
+        action = request.POST.get('action')
+        
+        # Get current quantity
+        current_qty = cart.cart.get(str(product.id), {}).get('quantity', 0)
+        
+        if action == 'increment':
+            cart.add(product, 1)
+        elif action == 'decrement':
+            if current_qty > 1:
+                cart.add(product, -1)
+            else:
+                cart.remove(product)
+                
+        if request.htmx:
+            return render(request, 'catalog/_cart_drawer.html', {'cart': cart})
+        return HttpResponse(status=204)
+
+@method_decorator(require_catalog, name='dispatch')
+class CartDetailView(View):
+    def get(self, request):
+        cart = Cart(request)
+        return render(request, 'catalog/_cart_drawer.html', {'cart': cart})
+
+@method_decorator(require_catalog, name='dispatch')
+class CheckoutView(View):
+    def get(self, request):
+        cart = Cart(request)
+        if len(cart) == 0:
+            from django.shortcuts import redirect
+            return redirect('catalog:public_list')
+        return render(request, 'catalog/checkout.html', {'cart': cart})
+
+    def post(self, request):
+        cart = Cart(request)
+        if len(cart) == 0:
+            from django.shortcuts import redirect
+            return redirect('catalog:public_list')
+            
+        nome = request.POST.get('nome')
+        telefone = request.POST.get('telefone')
+        
+        # Create Order
+        pedido = PedidoCatalogo.objects.create(
+            cliente_nome=nome,
+            cliente_telefone=telefone,
+            total=cart.get_total_price()
+        )
+        
+        # Create Items
+        for item in cart:
+            ItemPedidoCatalogo.objects.create(
+                pedido=pedido,
+                produto=item['product'],
+                quantidade=item['quantity'],
+                preco_unitario=item['price']
+            )
+            
+        # Clear Cart
+        cart.clear()
+        
+        from django.shortcuts import redirect
+        return redirect('catalog:order_summary', order_id=pedido.id)

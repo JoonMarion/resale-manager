@@ -1,0 +1,78 @@
+<div class="flex flex-col h-full bg-white dark:bg-slate-900">
+    <!-- Header -->
+    <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-2xl flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                </svg>
+            </div>
+            <h2 class="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Seu Carrinho</h2>
+        </div>
+        <button onclick="closeCart()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Items -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-6">
+        {% if cart|length > 0 %}
+            {% for item in cart %}
+            <div class="flex gap-4 group">
+                <div class="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-2xl overflow-hidden shrink-0">
+                    {% if item.product.image %}
+                        <img src="{{ item.product.image.url }}" class="w-full h-full object-cover">
+                    {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-slate-200">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm leading-tight mb-2 line-clamp-2">{{ item.product.name }}</h4>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
+                            <button hx-post="{% url 'catalog:cart_update' item.product.id %}" hx-vals='{"action": "decrement"}' hx-target="#cart-container" class="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-red-500 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                            </button>
+                            <span class="w-8 text-center text-xs font-black text-slate-700 dark:text-slate-300">{{ item.quantity }}</span>
+                            <button hx-post="{% url 'catalog:cart_update' item.product.id %}" hx-vals='{"action": "increment"}' hx-target="#cart-container" class="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-green-600 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            </button>
+                        </div>
+                        <span class="font-black text-slate-900 dark:text-slate-100 text-sm">R$ {{ item.total_price }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="h-full flex flex-col items-center justify-center text-center opacity-50">
+                <div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                    </svg>
+                </div>
+                <p class="text-sm font-bold text-slate-500">Seu carrinho está vazio</p>
+                <button onclick="closeCart()" class="mt-4 text-xs font-black uppercase tracking-widest text-green-600">Continuar comprando</button>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Footer -->
+    {% if cart|length > 0 %}
+    <div class="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+        <div class="flex justify-between items-center mb-6">
+            <span class="text-sm font-bold text-slate-500 uppercase tracking-widest">Total</span>
+            <span class="text-2xl font-black text-green-600 dark:text-green-400">R$ {{ cart.get_total_price }}</span>
+        </div>
+        <a href="{% url 'catalog:checkout' %}" class="w-full py-4 bg-green-600 hover:bg-green-500 text-white font-black rounded-2xl shadow-xl shadow-green-100 dark:shadow-none flex items-center justify-center gap-3 active:scale-[0.98] transition-all">
+            <span>Finalizar Pedido</span>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7-7 7"></path>
+            </svg>
+        </a>
+    </div>
+    {% endif %}
+</div>

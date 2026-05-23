@@ -31,7 +31,7 @@
                         <button 
                             hx-delete="{% url 'products:delete' product.pk %}" 
                             hx-trigger="confirmed"
-                            hx-target="closest .item-card"
+                            hx-target="closest .premium-card"
                             hx-swap="outerHTML"
                             data-confirm-msg="Tem certeza que deseja excluir o produto {{ product.name }}?"
                             onclick="event.stopPropagation(); showConfirm(this.dataset.confirmMsg, (function(btn){ return function(){ htmx.trigger(btn, 'confirmed'); }; })(this))"

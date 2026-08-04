@@ -89,8 +89,10 @@ class Command(BaseCommand):
                             help="Quantidade de clientes a criar (padrão: 30)")
         parser.add_argument("--products",  type=int, default=25,
                             help="Quantidade de produtos a criar (padrão: 25)")
-        parser.add_argument("--sales",     type=int, default=50,
-                            help="Quantidade de vendas a criar (padrão: 50)")
+        parser.add_argument("--sales",     type=int, default=80,
+                            help="Quantidade de vendas a criar (padrão: 80)")
+        parser.add_argument("--days", type=int, default=180,
+                            help="Espalha vendas nos últimos N dias (padrão: 180)")
         parser.add_argument("--clear", action="store_true",
                             help="Remove todos os dados existentes antes de criar")
 
@@ -166,12 +168,26 @@ class Command(BaseCommand):
         # ── Vendas ────────────────────────────────────────────────────────────
         self.stdout.write("🛒  Criando vendas...")
         agora = timezone.now()
+        span_days = max(1, options["days"])
+        total_sales = options["sales"]
         vendas_criadas = 0
 
-        for i in range(options["sales"]):
-            # Distribui as vendas nos últimos 6 meses
-            dias_atras = random.randint(0, 180)
-            data_venda = agora - timedelta(days=dias_atras)
+        # Distribui de forma mais uniforme nos últimos meses (útil p/ filtrar por período)
+        for i in range(total_sales):
+            # ~70% espalhado uniformemente; ~30% concentrado nos últimos 45 dias
+            if random.random() < 0.3:
+                dias_atras = random.randint(0, min(45, span_days))
+            else:
+                # Fatias iguais ao longo do intervalo para cobrir todos os meses
+                slot = i % span_days
+                jitter = random.randint(0, max(0, span_days // max(total_sales, 1)))
+                dias_atras = min(span_days, slot + jitter)
+
+            data_venda = agora - timedelta(
+                days=dias_atras,
+                hours=random.randint(8, 20),
+                minutes=random.randint(0, 59),
+            )
 
             cliente = random.choice(clientes_criados) if random.random() > 0.1 else None
             is_paid = random.random() > 0.35
@@ -199,7 +215,9 @@ class Command(BaseCommand):
 
             vendas_criadas += 1
 
-        self.stdout.write(self.style.SUCCESS(f"   {vendas_criadas} vendas criadas.\n"))
+        self.stdout.write(self.style.SUCCESS(
+            f"   {vendas_criadas} vendas criadas (últimos {span_days} dias).\n"
+        ))
 
         self.stdout.write(self.style.SUCCESS(
             "✅  Seed concluído!\n"
